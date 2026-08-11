@@ -1,75 +1,64 @@
-# React + TypeScript + Vite
+# Finora
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend web da plataforma Finora, uma aplicação de planejamento e gestão financeira pessoal.
 
-Currently, two official plugins are available:
+## 🚧 Status
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Em desenvolvimento.
 
-## React Compiler
+## 🎯 Sobre o projeto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+O Finora é uma aplicação full-stack de gestão financeira pessoal criada com o objetivo de oferecer uma experiência moderna para controle de receitas, despesas, contas e planejamento financeiro.
 
-## Expanding the ESLint configuration
+Este repositório contém exclusivamente o frontend da aplicação.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Tecnologias
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- React Hook Form
+- Zod
+- TanStack Query
+- Recharts
+- Framer Motion
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+> Algumas tecnologias serão adicionadas conforme o desenvolvimento do projeto avançar.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## ✨ Funcionalidades
 
-```
+### Atualmente
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- [ ] Tela de login
+- [ ] Tela de cadastro
+- [ ] Recuperação de senha
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Planejadas
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- [ ] Dashboard financeiro
+- [ ] Gerenciamento de contas
+- [ ] Gerenciamento de transações
+- [ ] Categorias
+- [ ] Orçamentos
+- [ ] Metas financeiras
+- [ ] Planejamento financeiro
+- [ ] Relatórios
+- [ ] Transações recorrentes
+- [ ] Parcelamentos
 
-```
+## 🎨 Design
+
+O Finora segue uma identidade visual inspirada em produtos fintech e SaaS modernos, utilizando tons de roxo como base da identidade.
+
+## 📁 Estrutura
+
+A estrutura do projeto será organizada de acordo com o crescimento da aplicação, priorizando separação de responsabilidades, reutilização de componentes e organização por funcionalidades.
+
+## 🚀 Executando localmente
+
+Clone o repositório:
+
+```bash
+git clone <repository-url>
