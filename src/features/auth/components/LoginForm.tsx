@@ -2,6 +2,7 @@ import { useState } from "react"
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -133,12 +134,9 @@ export function LoginForm() {
               Senha
             </Label>
 
-            <a
-              href="/forgot-password"
-              className="text-sm font-medium text-white/80 transition-colors hover:text-white"
-            >
+            <Link to="/forgot-password" className="text-sm font-medium text-white/80 transition-colors hover:text-white">
               Esqueceu a senha?
-            </a>
+            </Link>
           </div>
 
           <div className="relative">
@@ -208,13 +206,13 @@ export function LoginForm() {
           Ainda não possui uma conta?
         </p>
 
-        <a
-          href="/register"
+        <Link
+          to="/register"
           className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-white transition-colors hover:text-white/80"
         >
           Criar conta
           <ArrowRight size={16} />
-        </a>
+        </Link>
       </div>
     </div>
   )
