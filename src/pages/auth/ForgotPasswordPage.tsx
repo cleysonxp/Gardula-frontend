@@ -1,3 +1,10 @@
+import { AuthLayout } from "@/components/layout/AuthLayout"
+import { ForgotPasswordForm } from "@/features/auth/components/ForgotPasswordForm"
+
 export function ForgotPasswordPage() {
-  return <h1>Recuperação de senha</h1>
+  return (
+    <AuthLayout>
+      <ForgotPasswordForm />
+    </AuthLayout>
+  )
 }
