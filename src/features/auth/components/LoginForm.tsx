@@ -2,7 +2,7 @@ import { useState } from "react"
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,8 @@ import {
 } from "@/features/auth/schemas/login.schema"
 
 export function LoginForm() {
+  const navigate = useNavigate()
+
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
 
@@ -31,6 +33,8 @@ export function LoginForm() {
 
     try {
       await fakeLogin(data)
+
+      navigate("/")
     } catch (error) {
       if (error instanceof Error) {
         setLoginError(error.message)
