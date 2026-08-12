@@ -1,6 +1,6 @@
-# Finora
+# Gardula
 
-Frontend web da plataforma Finora, uma aplicação de planejamento e gestão financeira pessoal.
+Frontend web da plataforma Gardula, uma aplicação de planejamento e gestão financeira pessoal.
 
 ## 🚧 Status
 
@@ -8,7 +8,7 @@ Em desenvolvimento.
 
 ## 🎯 Sobre o projeto
 
-O Finora é uma aplicação full-stack de gestão financeira pessoal criada com o objetivo de oferecer uma experiência moderna para controle de receitas, despesas, contas e planejamento financeiro.
+O Gardula é uma aplicação full-stack de gestão financeira pessoal criada com o objetivo de oferecer uma experiência moderna para controle de receitas, despesas, contas e planejamento financeiro.
 
 Este repositório contém exclusivamente o frontend da aplicação.
 
@@ -50,7 +50,7 @@ Este repositório contém exclusivamente o frontend da aplicação.
 
 ## 🎨 Design
 
-O Finora segue uma identidade visual inspirada em produtos fintech e SaaS modernos, utilizando tons de roxo como base da identidade.
+O Gardula segue uma identidade visual inspirada em produtos fintech e SaaS modernos, utilizando tons de roxo como base da identidade.
 
 ## 📁 Estrutura
 
