@@ -3,7 +3,7 @@ function App() {
     <main className="flex min-h-screen items-center justify-center bg-background">
       <div className="rounded-2xl bg-surface p-10 shadow-lg">
         <h1 className="text-4xl font-bold text-primary-600">
-          Finora
+          Gardula
         </h1>
 
         <p className="mt-2 text-text-muted">

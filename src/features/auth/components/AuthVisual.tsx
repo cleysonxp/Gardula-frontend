@@ -7,7 +7,7 @@ export function AuthVisual() {
 
             <div className="relative z-10 max-w-lg">
                 <span className="text-sm font-medium uppercase tracking-[0.3em] text-white/70">
-                    Finora
+                    Gardula
                 </span>
 
                 <h1 className="mt-6 text-5xl font-bold tracking-tight">

@@ -1,14 +1,10 @@
 import { AuthLayout } from "@/components/layout/AuthLayout"
+import { LoginForm } from "@/features/auth/components/LoginForm"
 
 export function LoginPage() {
-    return (
-        <AuthLayout>
-            <div>
-                <h1 className="text-2xl font-bold">Entrar</h1>
-                <p className="mt-2 text-text-muted">
-                    Acesse sua conta Finora.
-                </p>
-            </div>
-        </AuthLayout>
-    )
+  return (
+    <AuthLayout>
+      <LoginForm />
+    </AuthLayout>
+  )
 }
