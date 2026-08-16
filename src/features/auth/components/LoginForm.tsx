@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useContext } from "react"
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -8,13 +9,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+import { AuthContext } from "@/features/auth/context/AuthContext"
+import { saveSession } from "@/features/auth/services/authStorage"
+
 import {
   loginSchema,
   type LoginFormData,
 } from "@/features/auth/schemas/login.schema"
 
+import { login } from "@/features/auth/services/authService"
+
 export function LoginForm() {
   const navigate = useNavigate()
+  const { setSession } = useContext(AuthContext)
 
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
@@ -32,7 +39,10 @@ export function LoginForm() {
     setLoginError(null)
 
     try {
-      await fakeLogin(data)
+      const session = await login(data)
+
+      saveSession(session)
+      setSession(session)
 
       navigate("/")
     } catch (error) {
@@ -43,20 +53,6 @@ export function LoginForm() {
 
       setLoginError("Não foi possível realizar o login.")
     }
-  }
-
-  async function fakeLogin(data: LoginFormData) {
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    const isValidUser =
-      data.email === "teste@gardula.com" &&
-      data.password === "12345678"
-
-    if (!isValidUser) {
-      throw new Error("E-mail ou senha incorretos.")
-    }
-
-    console.log("Login:", data)
   }
 
   return (
