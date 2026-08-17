@@ -4,14 +4,20 @@ import { RegisterPage } from "@/pages/auth/RegisterPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { HomePage } from "@/pages/HomePage"
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
 
 export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
       {
-        path: "/",
-        element: <HomePage />,
+        element: <AuthenticatedLayout />,
+        children: [
+          {
+            path: "/",
+            element: <HomePage />,
+          },
+        ],
       },
     ],
   },
