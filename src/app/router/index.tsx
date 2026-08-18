@@ -3,6 +3,7 @@ import { LoginPage } from "@/pages/auth/LoginPage"
 import { RegisterPage } from "@/pages/auth/RegisterPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { HomePage } from "@/pages/HomePage"
+import { AccountsPage } from "@/pages/AccountsPage"
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
 
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
           {
             path: "/",
             element: <HomePage />,
+          },
+          {
+            path: "/accounts",
+            element: <AccountsPage />,
           },
         ],
       },

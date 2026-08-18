@@ -8,42 +8,84 @@ import {
     Settings,
     ArrowLeftRight,
     ChevronRight,
+    WalletCards,
+    PiggyBank,
 } from "lucide-react"
 import { Link, Outlet, useLocation } from "react-router"
 import { useContext } from "react"
 
 import { AuthContext } from "@/features/auth/context/AuthContext"
 
-const menuItems = [
+const menuSections = [
     {
-        label: "Home",
-        icon: Home,
-        path: "/",
+        title: "Menu",
+        items: [
+            {
+                label: "Home",
+                icon: Home,
+                path: "/",
+            },
+        ],
     },
     {
-        label: "Contas",
-        icon: CreditCard,
-        path: "/accounts",
+        title: "Financeiro",
+        items: [
+            {
+                label: "Contas",
+                icon: WalletCards,
+                path: "/accounts",
+            },
+            {
+                label: "Cartões",
+                icon: CreditCard,
+                path: "/cards",
+            },
+            {
+                label: "Transações",
+                icon: ArrowLeftRight,
+                path: "/transactions",
+            },
+            {
+                label: "Recorrentes",
+                icon: Repeat,
+                path: "/recurring",
+            },
+        ],
     },
     {
-        label: "Transações",
-        icon: ArrowLeftRight,
-        path: "/transactions",
+        title: "Planejamento",
+        items: [
+            {
+                label: "Objetivos",
+                icon: Goal,
+                path: "/goals",
+            },
+            {
+                label: "Orçamento",
+                icon: PiggyBank,
+                path: "/budget",
+            },
+        ],
     },
     {
-        label: "Recorrentes",
-        icon: Repeat,
-        path: "/recurring",
+        title: "Patrimônio",
+        items: [
+            {
+                label: "Investimentos",
+                icon: BarChart3,
+                path: "/investments",
+            },
+        ],
     },
     {
-        label: "Objetivos",
-        icon: Goal,
-        path: "/goals",
-    },
-    {
-        label: "Relatórios",
-        icon: BarChart3,
-        path: "/reports",
+        title: "Análises",
+        items: [
+            {
+                label: "Relatórios",
+                icon: BarChart3,
+                path: "/reports",
+            },
+        ],
     },
 ]
 
@@ -56,122 +98,332 @@ export function AuthenticatedLayout() {
     }
 
     return (
-        <div className="flex min-h-screen bg-background">
+        <div className="flex h-screen overflow-hidden bg-background">
+
             {/* Sidebar */}
-            {/* <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden bg-gradient-to-b from-[#171653] via-[#1b1764] to-[#21156d] text-white"> */}
-            <aside className="relative flex w-64 shrink-0 flex-col overflow-hidden bg-gradient-to-b from-sidebar via-sidebar to-sidebar-secondary text-white">
-            {/* Logo */}
-            <div className="relative z-10 flex h-20 items-center border-b border-white/10 px-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500 text-sm font-bold shadow-lg shadow-violet-900/30">
-                        G
-                    </div>
+            <aside
+                className="
+                    relative
+                    flex
+                    h-screen
+                    w-64
+                    shrink-0
+                    flex-col
+                    overflow-hidden
+                    bg-gradient-to-b
+                    from-sidebar
+                    via-sidebar
+                    to-sidebar-secondary
+                    text-white
+                "
+            >
 
-                    <span className="text-xl font-bold tracking-tight">
-                        Gardula
-                    </span>
-                </div>
-            </div>
-
-            {/* Menu */}
-            <div className="relative z-10 flex-1 px-4 py-7">
-                <p className="mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-white/40">
-                    Menu
-                </p>
-
-                <nav className="space-y-1.5">
-                    {menuItems.map((item) => {
-                        const Icon = item.icon
-                        const isActive = location.pathname === item.path
-
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={[
-                                    "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all",
-                                    isActive
-                                        ? "bg-violet-500/80 text-white shadow-lg shadow-violet-950/20"
-                                        : "text-white/70 hover:bg-white/10 hover:text-white",
-                                ].join(" ")}
-                            >
-                                <Icon size={19} />
-                                <span>{item.label}</span>
-                            </Link>
-                        )
-                    })}
-                </nav>
-
-                {/* Configurações */}
-                <div className="my-7 border-t border-white/10 pt-7">
-                    <p className="mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-white/40">
-                        Configurações
-                    </p>
-
-                    <Link
-                        to="/settings"
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-white/70 transition-all hover:bg-white/10 hover:text-white"
-                    >
-                        <Settings size={19} />
-                        <span>Configurações</span>
-                    </Link>
-                </div>
-
-                <div className="border-t border-white/10 pt-3"></div>
-
-                {/* Logout */}
-                <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-300 transition-all hover:bg-red-500/10 hover:text-red-200"
+                {/* Logo */}
+                <div
+                    className="
+                        relative
+                        z-10
+                        flex
+                        h-16
+                        shrink-0
+                        items-center
+                        border-b
+                        border-white/10
+                        px-5
+                    "
                 >
-                    <LogOut size={19} />
-                    <span>Sair</span>
-                </button>
-            </div>
-
-            {/* Perfil */}
-            <div className="relative z-10 border-t border-white/10 p-4">
-                <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/80">
-                        <span className="text-sm font-semibold">
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="
+                                flex
+                                h-8
+                                w-8
+                                items-center
+                                justify-center
+                                rounded-lg
+                                bg-violet-500
+                                text-sm
+                                font-bold
+                                shadow-lg
+                                shadow-violet-900/30
+                            "
+                        >
                             G
+                        </div>
+
+                        <span className="text-lg font-bold tracking-tight">
+                            Gardula
                         </span>
                     </div>
+                </div>
 
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">
-                            Minha conta
+                {/* Menu */}
+                <div
+                    className="
+                        relative
+                        z-10
+                        flex-1
+                        min-h-0
+                        overflow-y-auto
+                        px-3
+                        py-4
+                        scrollbar-thin
+                    "
+                >
+                    {menuSections.map((section, sectionIndex) => (
+                        <div
+                            key={section.title}
+                            className={
+                                sectionIndex > 0
+                                    ? "mt-4"
+                                    : ""
+                            }
+                        >
+                            <p
+                                className="
+                                    mb-2
+                                    px-3
+                                    text-[10px]
+                                    font-semibold
+                                    uppercase
+                                    tracking-wider
+                                    text-white/40
+                                "
+                            >
+                                {section.title}
+                            </p>
+
+                            <nav className="space-y-0.5">
+                                {section.items.map((item) => {
+                                    const Icon = item.icon
+
+                                    const isActive =
+                                        location.pathname === item.path
+
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            className={[
+                                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                                                isActive
+                                                    ? "bg-violet-500/80 text-white shadow-lg shadow-violet-950/20"
+                                                    : "text-white/70 hover:bg-white/10 hover:text-white",
+                                            ].join(" ")}
+                                        >
+                                            <Icon size={17} />
+
+                                            <span>
+                                                {item.label}
+                                            </span>
+                                        </Link>
+                                    )
+                                })}
+                            </nav>
+                        </div>
+                    ))}
+
+                    {/* Configurações */}
+                    <div
+                        className="
+                            mt-4
+                            border-t
+                            border-white/10
+                            pt-4
+                        "
+                    >
+                        <p
+                            className="
+                                mb-2
+                                px-3
+                                text-[10px]
+                                font-semibold
+                                uppercase
+                                tracking-wider
+                                text-white/40
+                            "
+                        >
+                            Configurações
                         </p>
 
-                        <p className="text-xs text-white/50">
-                            Ver perfil
-                        </p>
+                        <Link
+                            to="/settings"
+                            className="
+                                flex
+                                items-center
+                                gap-3
+                                rounded-lg
+                                px-3
+                                py-2
+                                text-sm
+                                font-medium
+                                text-white/70
+                                transition-all
+                                hover:bg-white/10
+                                hover:text-white
+                            "
+                        >
+                            <Settings size={17} />
+
+                            <span>
+                                Configurações
+                            </span>
+                        </Link>
                     </div>
 
-                    <ChevronRight
-                        size={20}
-                        className="ml-auto text-white/40"
-                    />
+                    {/* Logout */}
+                    <div
+                        className="
+                            mt-3
+                            border-t
+                            border-white/10
+                            pt-2
+                        "
+                    >
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="
+                                flex
+                                w-full
+                                items-center
+                                gap-3
+                                rounded-lg
+                                px-3
+                                py-2
+                                text-sm
+                                font-medium
+                                text-red-300
+                                transition-all
+                                hover:bg-red-500/10
+                                hover:text-red-200
+                            "
+                        >
+                            <LogOut size={17} />
 
+                            <span>
+                                Sair
+                            </span>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Decoração inferior */}
-            <div className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-72 rounded-[50%] bg-violet-700/30 blur-sm" />
-            <div className="pointer-events-none absolute -bottom-20 left-20 h-36 w-56 rounded-[50%] bg-violet-500/20 blur-sm" />
-        </aside>
+                {/* Perfil */}
+                <div
+                    className="
+                        relative
+                        z-10
+                        shrink-0
+                        border-t
+                        border-white/10
+                        p-3
+                    "
+                >
+                    <div
+                        className="
+                            flex
+                            items-center
+                            gap-3
+                            rounded-lg
+                            px-2
+                            py-1.5
+                        "
+                    >
+                        <div
+                            className="
+                                flex
+                                h-9
+                                w-9
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-violet-500/80
+                            "
+                        >
+                            <span className="text-sm font-semibold">
+                                G
+                            </span>
+                        </div>
 
-            {/* Conteúdo */ }
-    <main className="relative min-w-0 flex-1 overflow-hidden">
-        {/* Decoração superior */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-96 rounded-full bg-violet-100/70 blur-3xl" />
+                        <div className="min-w-0">
+                            <p
+                                className="
+                                    truncate
+                                    text-sm
+                                    font-semibold
+                                    text-white
+                                "
+                            >
+                                Minha conta
+                            </p>
 
-        <div className="relative min-h-screen">
-            <Outlet />
+                            <p className="text-[11px] text-white/50">
+                                Ver perfil
+                            </p>
+                        </div>
+
+                        <ChevronRight
+                            size={18}
+                            className="ml-auto text-white/40"
+                        />
+                    </div>
+                </div>
+
+                {/* Decoração inferior */}
+                <div
+                    className="
+                        pointer-events-none
+                        absolute
+                        -bottom-16
+                        -left-12
+                        h-40
+                        w-72
+                        rounded-[50%]
+                        bg-violet-700/30
+                        blur-sm
+                    "
+                />
+
+                <div
+                    className="
+                        pointer-events-none
+                        absolute
+                        -bottom-20
+                        left-20
+                        h-36
+                        w-56
+                        rounded-[50%]
+                        bg-violet-500/20
+                    "
+                />
+
+            </aside>
+
+            {/* Conteúdo */}
+            <main className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+
+                {/* Decoração superior */}
+                <div
+                    className="
+                        pointer-events-none
+                        absolute
+                        -right-24
+                        -top-24
+                        h-72
+                        w-96
+                        rounded-full
+                        bg-violet-100/70
+                        blur-3xl
+                    "
+                />
+
+                <div className="relative min-h-full">
+                    <Outlet />
+                </div>
+
+            </main>
+
         </div>
-    </main>
-        </div >
     )
 }
