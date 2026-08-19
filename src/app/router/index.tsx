@@ -4,7 +4,8 @@ import { RegisterPage } from "@/pages/auth/RegisterPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { HomePage } from "@/pages/HomePage"
 import { AccountsPage } from "@/pages/AccountsPage"
-import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { CardsPage } from "@/pages/CardsPage"
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute"
 import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
 
 export const router = createBrowserRouter([
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
           {
             path: "/accounts",
             element: <AccountsPage />,
+          },
+          {
+            path: "/cards",
+            element: <CardsPage />,
           },
         ],
       },
