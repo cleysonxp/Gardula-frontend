@@ -5,39 +5,28 @@ import {
 } from "lucide-react"
 
 import { AccountSummaryCard } from "@/features/accounts/components/AccountSummaryCard"
-import type { Account } from "@/features/accounts/types/account"
 
 type AccountSummaryProps = {
-    accounts: Account[]
+    totalBalance: number
+    activeAccounts: number
+    totalIncome: number
+    totalExpense: number
     formatCurrency: (value: number) => string
 }
 
 export function AccountSummary({
-    accounts,
+    totalBalance,
+    activeAccounts,
+    totalIncome,
+    totalExpense,
     formatCurrency,
 }: AccountSummaryProps) {
-    const totalBalance = accounts.reduce(
-        (total, account) => total + account.balance,
-        0
-    )
-
-    const totalIncome = accounts.reduce(
-        (total, account) => total + account.income,
-        0
-    )
-
-    const totalExpenses = accounts.reduce(
-        (total, account) => total + account.expenses,
-        0
-    )
-
     return (
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-
             <AccountSummaryCard
                 title="Saldo total"
                 value={formatCurrency(totalBalance)}
-                description={`${accounts.length} contas ativas`}
+                description={`${activeAccounts} contas ativas`}
                 icon={Wallet}
                 iconBackground="bg-violet-100"
                 iconColor="text-violet-600"
@@ -60,7 +49,7 @@ export function AccountSummary({
 
             <AccountSummaryCard
                 title="Saídas"
-                value={formatCurrency(totalExpenses)}
+                value={formatCurrency(totalExpense)}
                 description="Este mês"
                 icon={ArrowDown}
                 iconBackground="bg-red-100"
@@ -69,7 +58,6 @@ export function AccountSummary({
                 cardBackground="bg-red-50/70"
                 cardBorder="border-red-100"
             />
-
         </div>
     )
 }

@@ -1,8 +1,11 @@
 import { useState } from "react"
 import { Check, X } from "lucide-react"
 
+import { createAccount } from "@/features/accounts/services/accountService"
+
 type CreateAccountModalProps = {
     onClose: () => void
+    onCreated: () => Promise<void>
 }
 
 const accountColors = [
@@ -50,9 +53,14 @@ const accountColors = [
 
 export function CreateAccountModal({
     onClose,
+    onCreated,
 }: CreateAccountModalProps) {
+    const [name, setName] = useState("")
+    const [type, setType] = useState("")
     const [selectedColor, setSelectedColor] = useState("violet")
     const [initialBalance, setInitialBalance] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const selectedColorData = accountColors.find(
         (color) => color.value === selectedColor,
@@ -63,7 +71,6 @@ export function CreateAccountModal({
     ) {
         let value = event.target.value
 
-        // Remove tudo que não for número
         value = value.replace(/\D/g, "")
 
         if (!value) {
@@ -71,7 +78,6 @@ export function CreateAccountModal({
             return
         }
 
-        // Converte os últimos dois dígitos em centavos
         const numericValue = Number(value) / 100
 
         const formattedValue = new Intl.NumberFormat("pt-BR", {
@@ -80,6 +86,55 @@ export function CreateAccountModal({
         }).format(numericValue)
 
         setInitialBalance(formattedValue)
+    }
+
+    async function handleSubmit(
+        event: React.FormEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault()
+
+        if (!name.trim()) {
+            setError("Informe o nome da conta.")
+            return
+        }
+
+        if (!type) {
+            setError("Selecione o tipo da conta.")
+            return
+        }
+
+        try {
+            setIsSubmitting(true)
+            setError(null)
+
+            const numericInitialBalance = initialBalance
+                ? Number(
+                    initialBalance
+                        .replace(/\s/g, "")
+                        .replace("R$", "")
+                        .replace(/\./g, "")
+                        .replace(",", ".")
+                        .trim(),
+                )
+                : 0
+
+            await createAccount({
+                name: name.trim(),
+                type: Number(type),
+                initialBalance: numericInitialBalance,
+                color: selectedColor,
+            })
+
+            await onCreated()
+
+            onClose()
+        } catch (error) {
+            console.error("Erro ao criar conta:", error)
+
+            setError("Não foi possível criar a conta.")
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -94,7 +149,6 @@ export function CreateAccountModal({
             <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
                 {/* Cabeçalho */}
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-
                     <div>
                         <h2 className="text-lg font-bold text-slate-950">
                             Nova conta
@@ -113,12 +167,13 @@ export function CreateAccountModal({
                     >
                         <X size={19} />
                     </button>
-
                 </div>
 
                 {/* Formulário */}
-                <form className="space-y-5 px-6 py-6">
-
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5 px-6 py-6"
+                >
                     {/* Nome */}
                     <div>
                         <label
@@ -131,6 +186,10 @@ export function CreateAccountModal({
                         <input
                             id="account-name"
                             type="text"
+                            value={name}
+                            onChange={(event) =>
+                                setName(event.target.value)
+                            }
                             placeholder="Ex.: Nubank"
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                         />
@@ -147,8 +206,12 @@ export function CreateAccountModal({
 
                         <select
                             id="account-type"
-                            defaultValue=""
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                            value={type}
+                            onChange={(event) =>
+                                setType(event.target.value)
+                            }
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                        >
                             <option value="" disabled>
                                 Selecione o tipo
                             </option>
@@ -207,16 +270,17 @@ export function CreateAccountModal({
                                         key={color.value}
                                         type="button"
                                         onClick={() =>
-                                            setSelectedColor(color.value)
+                                            setSelectedColor(
+                                                color.value,
+                                            )
                                         }
                                         title={color.name}
                                         aria-label={`Selecionar cor ${color.name}`}
-                                        className={`relative flex h-9 w-9 items-center justify-center rounded-full ${color.className} transition hover:scale-105
-                                            ${isSelected
+                                        className={`relative flex h-9 w-9 items-center justify-center rounded-full ${color.className} transition hover:scale-105 ${
+                                            isSelected
                                                 ? "ring-2 ring-slate-950 ring-offset-2"
                                                 : ""
-                                            }
-                                        `}
+                                        }`}
                                     >
                                         {isSelected && (
                                             <Check
@@ -231,11 +295,8 @@ export function CreateAccountModal({
 
                         {/* Prévia */}
                         <div className="mt-4 flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
-
                             <div
-                                className={`h-3 w-3 rounded-full
-                                    ${selectedColorData?.className}
-                                `}
+                                className={`h-3 w-3 rounded-full ${selectedColorData?.className}`}
                             />
 
                             <span className="text-xs text-slate-500">
@@ -244,28 +305,39 @@ export function CreateAccountModal({
                                     {selectedColorData?.name}
                                 </span>
                             </span>
-
                         </div>
                     </div>
 
+                    {/* Erro */}
+                    {error && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                            <p className="text-sm text-red-600">
+                                {error}
+                            </p>
+                        </div>
+                    )}
+
                     {/* Ações */}
                     <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
-
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            disabled={isSubmitting}
+                            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
                             Cancelar
                         </button>
 
                         <button
                             type="submit"
-                            className="rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
-                            Criar conta
+                            disabled={isSubmitting}
+                            className="rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isSubmitting
+                                ? "Criando..."
+                                : "Criar conta"}
                         </button>
-
                     </div>
-
                 </form>
             </div>
         </div>

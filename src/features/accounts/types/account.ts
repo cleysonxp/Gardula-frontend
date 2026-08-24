@@ -1,3 +1,24 @@
+export type AccountOverviewItem = {
+    id: number
+    name: string
+    type: number
+    color: string
+    isActive: boolean
+    currentBalance: number
+    income: number
+    expense: number
+}
+
+export type AccountOverviewResponse = {
+    totalBalance: number
+    activeAccounts: number
+    totalIncome: number
+    totalExpense: number
+    accounts: AccountOverviewItem[]
+}
+
+// ---------------------------------------------------------------------------
+
 export type Account = {
     id: number
     name: string
