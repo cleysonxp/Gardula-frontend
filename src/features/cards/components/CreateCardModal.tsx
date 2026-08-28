@@ -1,6 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Check, X } from "lucide-react"
 
+import { getAccounts } from "@/features/accounts/services/accountService"
+import type { AccountResponse } from "@/features/accounts/services/accountService"
+import { createCard } from "@/features/cards/services/cardService"
 import type { CreateCardRequest } from "../types/card.types"
 
 type CreateCardModalProps = {
@@ -51,21 +54,6 @@ const cardColors = [
     },
 ]
 
-const mockAccounts = [
-    {
-        id: 1,
-        name: "Conta principal",
-    },
-    {
-        id: 2,
-        name: "Conta salário",
-    },
-    {
-        id: 3,
-        name: "Conta reserva",
-    },
-]
-
 const cardBrands = [
     {
         value: 1,
@@ -97,12 +85,36 @@ export function CreateCardModal({
     const [dueDay, setDueDay] = useState("")
     const [brand, setBrand] = useState("")
     const [selectedColor, setSelectedColor] = useState("violet")
+
+    const [accounts, setAccounts] = useState<AccountResponse[]>([])
+    const [isLoadingAccounts, setIsLoadingAccounts] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     const selectedColorData = cardColors.find(
         (color) => color.value === selectedColor,
     )
+
+    useEffect(() => {
+        async function loadAccounts() {
+            try {
+                setIsLoadingAccounts(true)
+                setError(null)
+
+                const response = await getAccounts()
+
+                setAccounts(response)
+            } catch (error) {
+                console.error("Erro ao carregar contas:", error)
+
+                setError("Não foi possível carregar as contas.")
+            } finally {
+                setIsLoadingAccounts(false)
+            }
+        }
+
+        loadAccounts()
+    }, [])
 
     function handleCreditLimitChange(
         event: React.ChangeEvent<HTMLInputElement>,
@@ -226,7 +238,7 @@ export function CreateCardModal({
                 color: selectedColor,
             }
 
-            console.log("Criar cartão:", request)
+            await createCard(request)
 
             if (onCreated) {
                 await onCreated()
@@ -315,13 +327,16 @@ export function CreateCardModal({
                             onChange={(event) =>
                                 setAccountId(event.target.value)
                             }
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                            disabled={isLoadingAccounts}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
                         >
                             <option value="" disabled>
-                                Selecione a conta
+                                {isLoadingAccounts
+                                    ? "Carregando contas..."
+                                    : "Selecione a conta"}
                             </option>
 
-                            {mockAccounts.map((account) => (
+                            {accounts.map((account) => (
                                 <option
                                     key={account.id}
                                     value={account.id}
@@ -529,7 +544,7 @@ export function CreateCardModal({
 
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isLoadingAccounts}
                             className="rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isSubmitting

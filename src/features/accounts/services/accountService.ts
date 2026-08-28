@@ -11,6 +11,17 @@ type CreateAccountRequest = {
     color: string
 }
 
+export type AccountResponse = {
+    id: number
+    name: string
+    type: number
+    initialBalance: number
+    color: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+}
+
 export async function getAccountsOverview(): Promise<AccountOverviewResponse> {
     const response = await apiClient("/Accounts/overview")
 
@@ -42,4 +53,14 @@ export async function deleteAccount(id: number): Promise<void> {
     if (!response.ok) {
         throw new Error("Failed to delete account.")
     }
+}
+
+export async function getAccounts(): Promise<AccountResponse[]> {
+    const response = await apiClient("/Accounts")
+
+    if (!response.ok) {
+        throw new Error("Failed to load accounts.")
+    }
+
+    return response.json()
 }

@@ -1,4 +1,5 @@
 import type { Card } from "../types/card.types"
+
 import { CardActions } from "./CardActions"
 import { CardDetailsHeader } from "./CardDetailsHeader"
 import { CardExpenses } from "./CardExpenses"
@@ -37,7 +38,9 @@ export function CardDetails({
 
                 <CardExpenses
                     card={card}
-                    onViewTransactions={onViewTransactions}
+                    onViewTransactions={
+                        onViewTransactions
+                    }
                 />
 
                 <CardActions
