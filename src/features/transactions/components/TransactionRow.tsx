@@ -1,8 +1,10 @@
 import {
     ArrowDown,
+    ArrowLeftRight,
     ArrowUp,
     MoreVertical,
     Utensils,
+    WalletCards,
 } from "lucide-react"
 
 import type { Transaction } from "../types/transaction.types"
@@ -12,199 +14,133 @@ type TransactionRowProps = {
     onSelect: () => void
 }
 
-export function TransactionRow({
-    transaction,
-    onSelect,
-}: TransactionRowProps) {
+const accountColorMap: Record<string, string> = {
+    red: "#ef4444",
+    violet: "#8b5cf6",
+}
+
+export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
     const isIncome = transaction.type === "Entrada"
+    const isTransfer = transaction.type === "Transferência"
+    const isTransferReceived = isTransfer && transaction.description.toLowerCase().includes("recebida")
+
+    const typeIcon = isTransfer ? (
+        <ArrowLeftRight className="h-4 w-4" />
+    ) : isIncome ? (
+        <ArrowDown className="h-4 w-4" />
+    ) : (
+        <ArrowUp className="h-4 w-4" />
+    )
+
+    const typeClassName = isIncome
+        ? "bg-emerald-50 text-emerald-600"
+        : isTransfer
+            ? "bg-violet-50 text-violet-600"
+            : "bg-red-50 text-red-500"
+
+    const amountClassName = isIncome
+        ? "text-emerald-500"
+        : isTransfer
+            ? "text-violet-600"
+            : "text-red-500"
+
+    const amountPrefix = isIncome || isTransferReceived ? "+ " : "- "
+
+    const accountInitials = transaction.account
+        ? transaction.account.slice(0, 2).toUpperCase()
+        : "—"
+
+    const accountColor = transaction.accountColor
+        ? accountColorMap[transaction.accountColor] ?? "#94a3b8"
+        : "#94a3b8"
+
+    const categoryIcon = isTransfer ? (
+        <ArrowLeftRight className="h-4 w-4" />
+    ) : transaction.category !== "—" ? (
+        <Utensils className="h-4 w-4" />
+    ) : (
+        <WalletCards className="h-4 w-4" />
+    )
 
     return (
-        <tr
-            className="
-                border-b
-                border-slate-100
-                transition
-                hover:bg-slate-50
-            "
-        >
-
-            {/* Data */}
-            <td className="px-5 py-4">
-
-                <p className="text-sm text-slate-700">
-                    {transaction.date}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                    {transaction.time}
-                </p>
-
+        <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+            <td className="px-5 py-4 align-middle">
+                <div>
+                    <p className="text-sm text-slate-700">{transaction.date}</p>
+                    <p className="mt-1 text-xs text-slate-400">{transaction.time}</p>
+                </div>
             </td>
 
-            {/* Descrição */}
-            <td className="px-3 py-4">
+            <td className="px-3 py-4 align-middle">
+                <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                        {transaction.description}
+                    </p>
 
-                <p className="text-sm font-semibold text-slate-900">
-                    {transaction.description}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                    {transaction.observation}
-                </p>
-
+                    {transaction.observation && (
+                        <p className="mt-1 text-xs text-slate-400">
+                            {transaction.observation}
+                        </p>
+                    )}
+                </div>
             </td>
 
-            {/* Categoria */}
-            <td className="px-3 py-4">
-
+            <td className="px-3 py-4 align-middle">
                 <div className="flex items-center gap-2">
-
-                    <span
-                        className="
-                            flex
-                            h-8
-                            w-8
-                            items-center
-                            justify-center
-                            rounded-full
-                            bg-orange-500
-                            text-white
-                        "
-                    >
-                        <Utensils size={15} />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+                        {categoryIcon}
                     </span>
 
-                    <span className="text-sm text-slate-700">
+                    <span className="text-sm text-slate-600">
                         {transaction.category}
                     </span>
-
                 </div>
-
             </td>
 
-            {/* Conta / Cartão */}
-            <td className="px-3 py-4">
-
+            <td className="px-3 py-4 align-middle">
                 <div className="flex items-center gap-2">
-
                     <span
-                        className={`
-                            flex
-                            h-8
-                            w-8
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-[10px]
-                            font-bold
-                            text-white
-                            ${
-                                transaction.account === "Nubank"
-                                    ? "bg-violet-600"
-                                    : "bg-blue-600"
-                            }
-                        `}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white"
+                        style={{ backgroundColor: accountColor }}
                     >
-                        {transaction.account === "Nubank"
-                            ? "nu"
-                            : "Itaú"}
+                        {accountInitials}
                     </span>
 
                     <div>
-
                         <p className="text-sm text-slate-700">
                             {transaction.account}
                         </p>
 
                         {transaction.accountLastFour && (
-                            <p className="text-xs text-slate-400">
+                            <p className="mt-0.5 text-xs text-slate-400">
                                 •••• {transaction.accountLastFour}
                             </p>
                         )}
-
                     </div>
-
                 </div>
-
             </td>
 
-            {/* Tipo */}
-            <td className="px-3 py-4">
-
-                <span
-                    className={`
-                        inline-flex
-                        items-center
-                        gap-1
-                        rounded-full
-                        px-2.5
-                        py-1
-                        text-xs
-                        font-medium
-                        ${
-                            isIncome
-                                ? "bg-emerald-50 text-emerald-600"
-                                : "bg-red-50 text-red-500"
-                        }
-                    `}
-                >
-                    {isIncome ? (
-                        <ArrowDown size={13} />
-                    ) : (
-                        <ArrowUp size={13} />
-                    )}
-
+            <td className="px-3 py-4 align-middle">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeClassName}`}>
+                    {typeIcon}
                     {transaction.type}
                 </span>
-
             </td>
 
-            {/* Valor */}
-            <td className="px-3 py-4 text-right">
-
-                <span
-                    className={`
-                        text-sm
-                        font-semibold
-                        ${
-                            isIncome
-                                ? "text-emerald-600"
-                                : "text-red-500"
-                        }
-                    `}
-                >
-                    {isIncome ? "+ " : "- "}
-
-                    {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                    }).format(transaction.amount)}
+            <td className="px-3 py-4 text-right align-middle">
+                <span className={`text-sm font-semibold ${amountClassName}`}>
+                    {amountPrefix}R$ {transaction.amount.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
                 </span>
-
             </td>
 
-            {/* Ações */}
-            <td className="px-5 py-4 text-right">
-
-                <button
-                    type="button"
-                    onClick={onSelect}
-                    className="
-                        rounded-lg
-                        border
-                        border-slate-200
-                        p-2
-                        text-slate-400
-                        transition
-                        hover:bg-slate-50
-                        hover:text-slate-700
-                    "
-                >
-                    <MoreVertical size={17} />
+            <td className="px-5 py-4 text-right align-middle">
+                <button type="button" onClick={onSelect} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600">
+                    <MoreVertical className="h-4 w-4" />
                 </button>
-
             </td>
-
         </tr>
     )
 }

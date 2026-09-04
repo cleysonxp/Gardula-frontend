@@ -1,0 +1,54 @@
+import { apiClient } from "@/lib/api/apiClient"
+import type { TransactionDetailResponse } from "@/features/transactions/types/transactionDetailApi.types"
+import type { TransactionListApiResponse } from "@/features/transactions/types/transactionApi.types"
+
+export type GetTransactionsParams = {
+    startDate?: string
+    endDate?: string
+    categoryId?: number
+    accountId?: number
+    cardId?: number
+    type?: number
+    search?: string
+    page?: number
+    pageSize?: number
+}
+
+export async function getTransactions(
+    params: GetTransactionsParams = {},
+): Promise<TransactionListApiResponse> {
+    const searchParams = new URLSearchParams()
+
+    if (params.startDate) searchParams.set("StartDate", params.startDate)
+    if (params.endDate) searchParams.set("EndDate", params.endDate)
+    if (params.categoryId !== undefined) searchParams.set("CategoryId", String(params.categoryId))
+    if (params.accountId !== undefined) searchParams.set("AccountId", String(params.accountId))
+    if (params.cardId !== undefined) searchParams.set("CardId", String(params.cardId))
+    if (params.type !== undefined) searchParams.set("Type", String(params.type))
+    if (params.search) searchParams.set("Search", params.search)
+
+    searchParams.set("Page", String(params.page ?? 1))
+    searchParams.set("PageSize", String(params.pageSize ?? 20))
+
+    const queryString = searchParams.toString()
+
+    const response = await apiClient(`/Transactions${queryString ? `?${queryString}` : ""}`)
+
+    if (!response.ok) {
+        throw new Error("Failed to load transactions.")
+    }
+
+    return response.json()
+}
+
+export async function getTransactionDetail(
+    id: number,
+): Promise<TransactionDetailResponse> {
+    const response = await apiClient(`/Transactions/${id}`)
+
+    if (!response.ok) {
+        throw new Error("Failed to load transaction details.")
+    }
+
+    return response.json()
+}

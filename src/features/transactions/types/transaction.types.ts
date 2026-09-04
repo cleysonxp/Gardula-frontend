@@ -1,4 +1,4 @@
-export type TransactionType = "Entrada" | "Saída"
+export type TransactionType = "Entrada" | "Saída" | "Transferência"
 
 export type TransactionStatus = "Concluída" | "Pendente"
 
@@ -11,8 +11,21 @@ export type Transaction = {
     category: string
     account: string
     accountLastFour?: string
+    accountColor?: string
     type: TransactionType
     amount: number
     paymentMethod: string
     status: TransactionStatus
+    transfer?: {
+        sourceAccount: {
+            id: number
+            name: string
+            color: string
+        }
+        destinationAccount: {
+            id: number
+            name: string
+            color: string
+        }
+    }
 }

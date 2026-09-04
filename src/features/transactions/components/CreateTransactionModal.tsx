@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { X } from "lucide-react"
+import { createTransfer } from "@/features/transactions/services/transferService"
+import { getAccounts, type AccountResponse } from "@/features/accounts/services/accountService"
 
 type TransactionType = "income" | "expense" | "transfer"
 
@@ -13,12 +15,92 @@ export function CreateTransactionModal({
     onClose,
 }: CreateTransactionModalProps) {
     const [type, setType] = useState<TransactionType>("income")
+    const [accounts, setAccounts] = useState<AccountResponse[]>([])
+    const [sourceAccountId, setSourceAccountId] = useState("")
+    const [destinationAccountId, setDestinationAccountId] = useState("")
+    const [amount, setAmount] = useState("")
+    const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const isTransfer = type === "transfer"
+
+    useEffect(() => {
+        if (!isOpen || !isTransfer) {
+            return
+        }
+
+        async function loadAccounts() {
+            try {
+                setIsLoadingAccounts(true)
+                setError(null)
+
+                const response = await getAccounts()
+
+                setAccounts(response.filter((account) => account.isActive))
+            } catch {
+                setError("Não foi possível carregar as contas.")
+            } finally {
+                setIsLoadingAccounts(false)
+            }
+        }
+
+        loadAccounts()
+    }, [isOpen, isTransfer])
+
+    function handleTypeChange(newType: TransactionType) {
+        setType(newType)
+        setError(null)
+
+        if (newType !== "transfer") {
+            setSourceAccountId("")
+            setDestinationAccountId("")
+            setAmount("")
+        }
+    }
+
+    async function handleTransferSubmit() {
+        if (!sourceAccountId || !destinationAccountId) {
+            setError("Selecione a conta de origem e a conta de destino.")
+            return
+        }
+
+        if (sourceAccountId === destinationAccountId) {
+            setError("A conta de origem e destino devem ser diferentes.")
+            return
+        }
+
+        const parsedAmount = Number(amount)
+
+        if (!parsedAmount || parsedAmount <= 0) {
+            setError("Informe um valor válido para a transferência.")
+            return
+        }
+
+        try {
+            setIsSaving(true)
+            setError(null)
+
+            await createTransfer({
+                sourceAccountId: Number(sourceAccountId),
+                destinationAccountId: Number(destinationAccountId),
+                amount: parsedAmount,
+            })
+
+            setSourceAccountId("")
+            setDestinationAccountId("")
+            setAmount("")
+            onClose()
+        } catch {
+            setError("Não foi possível realizar a transferência.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     if (!isOpen) {
         return null
     }
-
-    const isTransfer = type === "transfer"
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -48,14 +130,7 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="
-                            rounded-lg
-                            p-2
-                            text-slate-400
-                            transition
-                            hover:bg-slate-100
-                            hover:text-slate-700
-                        "
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                     >
                         <X size={20} />
                     </button>
@@ -77,30 +152,8 @@ export function CreateTransactionModal({
                             {/* Entrada */}
                             <button
                                 type="button"
-                                onClick={() => setType("income")}
-                                className={`
-                                    rounded-lg
-                                    border
-                                    px-4
-                                    py-3
-                                    text-sm
-                                    font-medium
-                                    transition
-                                    ${
-                                        type === "income"
-                                            ? `
-                                                border-violet-600
-                                                bg-violet-50
-                                                text-violet-700
-                                            `
-                                            : `
-                                                border-slate-200
-                                                bg-white
-                                                text-slate-600
-                                                hover:bg-slate-50
-                                            `
-                                    }
-                                `}
+                                onClick={() => handleTypeChange("income")}
+                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "income" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Entrada
                             </button>
@@ -108,30 +161,8 @@ export function CreateTransactionModal({
                             {/* Saída */}
                             <button
                                 type="button"
-                                onClick={() => setType("expense")}
-                                className={`
-                                    rounded-lg
-                                    border
-                                    px-4
-                                    py-3
-                                    text-sm
-                                    font-medium
-                                    transition
-                                    ${
-                                        type === "expense"
-                                            ? `
-                                                border-violet-600
-                                                bg-violet-50
-                                                text-violet-700
-                                            `
-                                            : `
-                                                border-slate-200
-                                                bg-white
-                                                text-slate-600
-                                                hover:bg-slate-50
-                                            `
-                                    }
-                                `}
+                                onClick={() => handleTypeChange("expense")}
+                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "expense" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Saída
                             </button>
@@ -139,30 +170,8 @@ export function CreateTransactionModal({
                             {/* Transferência */}
                             <button
                                 type="button"
-                                onClick={() => setType("transfer")}
-                                className={`
-                                    rounded-lg
-                                    border
-                                    px-4
-                                    py-3
-                                    text-sm
-                                    font-medium
-                                    transition
-                                    ${
-                                        type === "transfer"
-                                            ? `
-                                                border-violet-600
-                                                bg-violet-50
-                                                text-violet-700
-                                            `
-                                            : `
-                                                border-slate-200
-                                                bg-white
-                                                text-slate-600
-                                                hover:bg-slate-50
-                                            `
-                                    }
-                                `}
+                                onClick={() => handleTypeChange("transfer")}
+                                className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "transfer" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Transferência
                             </button>
@@ -170,10 +179,6 @@ export function CreateTransactionModal({
                         </div>
 
                     </div>
-
-                    {/* ================================================== */}
-                    {/* FORMULÁRIO DE TRANSFERÊNCIA                       */}
-                    {/* ================================================== */}
 
                     {isTransfer ? (
                         <>
@@ -185,33 +190,20 @@ export function CreateTransactionModal({
                                 </label>
 
                                 <select
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        bg-white
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-700
-                                        outline-none
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    value={sourceAccountId}
+                                    onChange={(event) => setSourceAccountId(event.target.value)}
+                                    disabled={isLoadingAccounts || isSaving}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
-                                        Selecione
+                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione"}
                                     </option>
 
-                                    <option value="1">
-                                        Nubank Principal
-                                    </option>
-
-                                    <option value="2">
-                                        Nubank Secundaria
-                                    </option>
+                                    {accounts.map((account) => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.name}
+                                        </option>
+                                    ))}
 
                                 </select>
 
@@ -225,33 +217,20 @@ export function CreateTransactionModal({
                                 </label>
 
                                 <select
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        bg-white
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-700
-                                        outline-none
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    value={destinationAccountId}
+                                    onChange={(event) => setDestinationAccountId(event.target.value)}
+                                    disabled={isLoadingAccounts || isSaving}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
-                                        Selecione
+                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione"}
                                     </option>
 
-                                    <option value="1">
-                                        Nubank Principal
-                                    </option>
-
-                                    <option value="2">
-                                        Nubank Secundaria
-                                    </option>
+                                    {accounts.map((account) => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.name}
+                                        </option>
+                                    ))}
 
                                 </select>
 
@@ -266,22 +245,13 @@ export function CreateTransactionModal({
 
                                 <input
                                     type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={amount}
+                                    onChange={(event) => setAmount(event.target.value)}
+                                    disabled={isSaving}
                                     placeholder="R$ 0,00"
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        placeholder:text-slate-400
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
 
                             </div>
@@ -295,21 +265,13 @@ export function CreateTransactionModal({
 
                                 <input
                                     type="date"
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    disabled
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400 outline-none"
                                 />
+
+                                <p className="mt-1 text-xs text-slate-400">
+                                    A transferência utiliza a data registrada pelo servidor.
+                                </p>
 
                             </div>
 
@@ -322,26 +284,17 @@ export function CreateTransactionModal({
 
                                 <textarea
                                     rows={3}
+                                    disabled
                                     placeholder="Adicione uma observação..."
-                                    className="
-                                        w-full
-                                        resize-none
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        placeholder:text-slate-400
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400 outline-none placeholder:text-slate-400"
                                 />
 
+                                <p className="mt-1 text-xs text-slate-400">
+                                    A transferência utiliza as descrições padrão do sistema.
+                                </p>
+
                             </div>
+
                         </>
                     ) : (
                         <>
@@ -359,21 +312,7 @@ export function CreateTransactionModal({
                                 <input
                                     type="text"
                                     placeholder="Ex.: Supermercado"
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        placeholder:text-slate-400
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                 />
 
                             </div>
@@ -388,21 +327,7 @@ export function CreateTransactionModal({
                                 <input
                                     type="number"
                                     placeholder="R$ 0,00"
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        placeholder:text-slate-400
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                 />
 
                             </div>
@@ -419,20 +344,7 @@ export function CreateTransactionModal({
 
                                     <input
                                         type="date"
-                                        className="
-                                            w-full
-                                            rounded-lg
-                                            border
-                                            border-slate-200
-                                            px-3
-                                            py-2.5
-                                            text-sm
-                                            text-slate-900
-                                            outline-none
-                                            focus:border-violet-500
-                                            focus:ring-1
-                                            focus:ring-violet-500
-                                        "
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                     />
 
                                 </div>
@@ -445,21 +357,7 @@ export function CreateTransactionModal({
                                     </label>
 
                                     <select
-                                        className="
-                                            w-full
-                                            rounded-lg
-                                            border
-                                            border-slate-200
-                                            bg-white
-                                            px-3
-                                            py-2.5
-                                            text-sm
-                                            text-slate-700
-                                            outline-none
-                                            focus:border-violet-500
-                                            focus:ring-1
-                                            focus:ring-violet-500
-                                        "
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                     >
                                         <option value="">
                                             Selecione
@@ -495,21 +393,7 @@ export function CreateTransactionModal({
                                 </label>
 
                                 <select
-                                    className="
-                                        w-full
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        bg-white
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-700
-                                        outline-none
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                 >
                                     <option value="">
                                         Selecione
@@ -537,26 +421,17 @@ export function CreateTransactionModal({
                                 <textarea
                                     rows={3}
                                     placeholder="Adicione uma observação..."
-                                    className="
-                                        w-full
-                                        resize-none
-                                        rounded-lg
-                                        border
-                                        border-slate-200
-                                        px-3
-                                        py-2.5
-                                        text-sm
-                                        text-slate-900
-                                        outline-none
-                                        placeholder:text-slate-400
-                                        focus:border-violet-500
-                                        focus:ring-1
-                                        focus:ring-violet-500
-                                    "
+                                    className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                                 />
 
                             </div>
                         </>
+                    )}
+
+                    {error && (
+                        <div className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            {error}
+                        </div>
                     )}
 
                 </div>
@@ -567,37 +442,19 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="
-                            rounded-lg
-                            border
-                            border-slate-200
-                            px-4
-                            py-2.5
-                            text-sm
-                            font-medium
-                            text-slate-600
-                            transition
-                            hover:bg-slate-50
-                        "
+                        disabled={isSaving}
+                        className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Cancelar
                     </button>
 
                     <button
                         type="button"
-                        className="
-                            rounded-lg
-                            bg-violet-600
-                            px-5
-                            py-2.5
-                            text-sm
-                            font-semibold
-                            text-white
-                            transition
-                            hover:bg-violet-700
-                        "
+                        onClick={isTransfer ? handleTransferSubmit : undefined}
+                        disabled={isSaving || (isTransfer && isLoadingAccounts)}
+                        className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Salvar
+                        {isSaving ? "Salvando..." : "Salvar"}
                     </button>
 
                 </div>
