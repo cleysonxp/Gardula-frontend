@@ -14,6 +14,20 @@ export type GetTransactionsParams = {
     pageSize?: number
 }
 
+export type CreateTransactionParams = {
+    accountId?: number | null
+    cardId?: number | null
+    categoryId?: number | null
+    amount: number
+    type: number
+    paymentMethod: number
+    description: string
+    date: string
+    installmentGroupId?: string | null
+    installmentNumber?: number | null
+    totalInstallments?: number | null
+}
+
 export async function getTransactions(
     params: GetTransactionsParams = {},
 ): Promise<TransactionListApiResponse> {
@@ -48,6 +62,24 @@ export async function getTransactionDetail(
 
     if (!response.ok) {
         throw new Error("Failed to load transaction details.")
+    }
+
+    return response.json()
+}
+
+export async function createTransaction(
+    params: CreateTransactionParams,
+) {
+    const response = await apiClient("/Transactions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to create transaction.")
     }
 
     return response.json()

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
+
 import { createTransfer } from "@/features/transactions/services/transferService"
 import { getAccounts, type AccountResponse } from "@/features/accounts/services/accountService"
+import { getCategories, type CategoryResponse } from "@/features/categories/services/categoryService"
 
 type TransactionType = "income" | "expense" | "transfer"
 
@@ -15,47 +17,82 @@ export function CreateTransactionModal({
     onClose,
 }: CreateTransactionModalProps) {
     const [type, setType] = useState<TransactionType>("income")
+
     const [accounts, setAccounts] = useState<AccountResponse[]>([])
+    const [categories, setCategories] = useState<CategoryResponse[]>([])
+
+    const [accountId, setAccountId] = useState("")
+    const [categoryId, setCategoryId] = useState("")
+
     const [sourceAccountId, setSourceAccountId] = useState("")
     const [destinationAccountId, setDestinationAccountId] = useState("")
+
+    const [description, setDescription] = useState("")
     const [amount, setAmount] = useState("")
+
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+
     const [error, setError] = useState<string | null>(null)
 
     const isTransfer = type === "transfer"
 
+    const categoryType = type === "income" ? 1 : type === "expense" ? 2 : null
+
+    const filteredCategories = categories.filter(
+        (category) =>
+            category.isActive &&
+            category.type === categoryType
+    )
+
     useEffect(() => {
-        if (!isOpen || !isTransfer) {
+        if (!isOpen) {
             return
         }
 
-        async function loadAccounts() {
+        async function loadData() {
             try {
-                setIsLoadingAccounts(true)
                 setError(null)
+                setIsLoadingAccounts(true)
+                setIsLoadingCategories(true)
 
-                const response = await getAccounts()
+                const [accountsResponse, categoriesResponse] = await Promise.all([
+                    getAccounts(),
+                    getCategories(),
+                ])
 
-                setAccounts(response.filter((account) => account.isActive))
+                setAccounts(
+                    accountsResponse.filter((account) => account.isActive)
+                )
+
+                setCategories(
+                    categoriesResponse.filter((category) => category.isActive)
+                )
             } catch {
-                setError("Não foi possível carregar as contas.")
+                setError("Não foi possível carregar os dados.")
             } finally {
                 setIsLoadingAccounts(false)
+                setIsLoadingCategories(false)
             }
         }
 
-        loadAccounts()
-    }, [isOpen, isTransfer])
+        loadData()
+    }, [isOpen])
 
     function handleTypeChange(newType: TransactionType) {
         setType(newType)
         setError(null)
 
+        setCategoryId("")
+
         if (newType !== "transfer") {
             setSourceAccountId("")
             setDestinationAccountId("")
-            setAmount("")
+        }
+
+        if (newType === "transfer") {
+            setAccountId("")
         }
     }
 
@@ -90,6 +127,7 @@ export function CreateTransactionModal({
             setSourceAccountId("")
             setDestinationAccountId("")
             setAmount("")
+
             onClose()
         } catch {
             setError("Não foi possível realizar a transferência.")
@@ -130,21 +168,23 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        disabled={isSaving}
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Fechar"
                     >
-                        <X size={20} />
+                        <X size={19} />
                     </button>
 
                 </div>
 
                 {/* Conteúdo */}
-                <div className="max-h-[70vh] overflow-y-auto px-6 py-6">
+                <div className="max-h-[75vh] overflow-y-auto px-6 py-6">
 
                     {/* Tipo */}
-                    <div className="mb-5">
+                    <div className="mb-6">
 
                         <label className="mb-2 block text-sm font-medium text-slate-700">
-                            Tipo
+                            Tipo de transação
                         </label>
 
                         <div className="grid grid-cols-3 gap-3">
@@ -153,6 +193,7 @@ export function CreateTransactionModal({
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("income")}
+                                disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "income" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Entrada
@@ -162,6 +203,7 @@ export function CreateTransactionModal({
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("expense")}
+                                disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "expense" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Saída
@@ -171,6 +213,7 @@ export function CreateTransactionModal({
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("transfer")}
+                                disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "transfer" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
                                 Transferência
@@ -179,6 +222,10 @@ export function CreateTransactionModal({
                         </div>
 
                     </div>
+
+                    {/* ================================================== */}
+                    {/* FORMULÁRIO DE TRANSFERÊNCIA                       */}
+                    {/* ================================================== */}
 
                     {isTransfer ? (
                         <>
@@ -192,7 +239,7 @@ export function CreateTransactionModal({
                                 <select
                                     value={sourceAccountId}
                                     onChange={(event) => setSourceAccountId(event.target.value)}
-                                    disabled={isLoadingAccounts || isSaving}
+                                    disabled={isSaving || isLoadingAccounts}
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
@@ -204,7 +251,6 @@ export function CreateTransactionModal({
                                             {account.name}
                                         </option>
                                     ))}
-
                                 </select>
 
                             </div>
@@ -219,7 +265,7 @@ export function CreateTransactionModal({
                                 <select
                                     value={destinationAccountId}
                                     onChange={(event) => setDestinationAccountId(event.target.value)}
-                                    disabled={isLoadingAccounts || isSaving}
+                                    disabled={isSaving || isLoadingAccounts}
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
@@ -231,7 +277,6 @@ export function CreateTransactionModal({
                                             {account.name}
                                         </option>
                                     ))}
-
                                 </select>
 
                             </div>
@@ -294,7 +339,6 @@ export function CreateTransactionModal({
                                 </p>
 
                             </div>
-
                         </>
                     ) : (
                         <>
@@ -311,9 +355,64 @@ export function CreateTransactionModal({
 
                                 <input
                                     type="text"
-                                    placeholder="Ex.: Supermercado"
-                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    value={description}
+                                    onChange={(event) => setDescription(event.target.value)}
+                                    disabled={isSaving}
+                                    placeholder="Ex.: Salário"
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
+
+                            </div>
+
+                            {/* Categoria */}
+                            <div className="mb-5">
+
+                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                    Categoria
+                                </label>
+
+                                <select
+                                    value={categoryId}
+                                    onChange={(event) => setCategoryId(event.target.value)}
+                                    disabled={isSaving || isLoadingCategories}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                >
+                                    <option value="">
+                                        {isLoadingCategories ? "Carregando categorias..." : "Selecione uma categoria"}
+                                    </option>
+
+                                    {filteredCategories.map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                            </div>
+
+                            {/* Conta */}
+                            <div className="mb-5">
+
+                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                    Conta
+                                </label>
+
+                                <select
+                                    value={accountId}
+                                    onChange={(event) => setAccountId(event.target.value)}
+                                    disabled={isSaving || isLoadingAccounts}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                >
+                                    <option value="">
+                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione uma conta"}
+                                    </option>
+
+                                    {accounts.map((account) => (
+                                        <option key={account.id} value={account.id}>
+                                            {account.name}
+                                        </option>
+                                    ))}
+                                </select>
 
                             </div>
 
@@ -326,88 +425,33 @@ export function CreateTransactionModal({
 
                                 <input
                                     type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={amount}
+                                    onChange={(event) => setAmount(event.target.value)}
+                                    disabled={isSaving}
                                     placeholder="R$ 0,00"
-                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
 
                             </div>
 
-                            {/* Data e categoria */}
-                            <div className="mb-5 grid grid-cols-2 gap-4">
-
-                                {/* Data */}
-                                <div>
-
-                                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                                        Data
-                                    </label>
-
-                                    <input
-                                        type="date"
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                                    />
-
-                                </div>
-
-                                {/* Categoria */}
-                                <div>
-
-                                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                                        Categoria
-                                    </label>
-
-                                    <select
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                                    >
-                                        <option value="">
-                                            Selecione
-                                        </option>
-
-                                        <option>
-                                            Alimentação
-                                        </option>
-
-                                        <option>
-                                            Transporte
-                                        </option>
-
-                                        <option>
-                                            Lazer
-                                        </option>
-
-                                        <option>
-                                            Saúde
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </div>
-
-                            {/* Conta / Cartão */}
+                            {/* Data */}
                             <div className="mb-5">
 
                                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Conta / Cartão
+                                    Data
                                 </label>
 
-                                <select
-                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                                >
-                                    <option value="">
-                                        Selecione
-                                    </option>
+                                <input
+                                    type="date"
+                                    disabled
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400 outline-none"
+                                />
 
-                                    <option>
-                                        Nubank •••• 1234
-                                    </option>
-
-                                    <option>
-                                        Itaú •••• 5678
-                                    </option>
-
-                                </select>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    A data será configurada na criação da transação.
+                                </p>
 
                             </div>
 
@@ -420,9 +464,14 @@ export function CreateTransactionModal({
 
                                 <textarea
                                     rows={3}
+                                    disabled
                                     placeholder="Adicione uma observação..."
-                                    className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                                    className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400 outline-none placeholder:text-slate-400"
                                 />
+
+                                <p className="mt-1 text-xs text-slate-400">
+                                    A observação será adicionada posteriormente.
+                                </p>
 
                             </div>
                         </>
@@ -451,7 +500,7 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={isTransfer ? handleTransferSubmit : undefined}
-                        disabled={isSaving || (isTransfer && isLoadingAccounts)}
+                        disabled={isSaving || isLoadingAccounts || isLoadingCategories}
                         className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isSaving ? "Salvando..." : "Salvar"}

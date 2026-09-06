@@ -13,6 +13,7 @@ import { mapTransactions } from "../mappers/transactionMapper"
 import type { Transaction } from "../types/transaction.types"
 
 export function TransactionsContent() {
+    const [search, setSearch] = useState("")
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
@@ -25,11 +26,13 @@ export function TransactionsContent() {
     useEffect(() => {
         const loadTransactions = async () => {
             try {
+                setIsLoading(true)
                 setError(null)
 
                 const response = await getTransactions({
                     page: 1,
                     pageSize: 20,
+                    search: search || undefined,
                 })
 
                 setTransactions(mapTransactions(response.items))
@@ -41,7 +44,7 @@ export function TransactionsContent() {
         }
 
         loadTransactions()
-    }, [])
+    }, [search])
 
     const handleSelectTransaction = async (transactionId: number) => {
         try {
@@ -92,7 +95,10 @@ export function TransactionsContent() {
                     <TransactionSummary />
 
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                        <TransactionFilters />
+                        <TransactionFilters
+                            search={search}
+                            onSearchChange={setSearch}
+                        />
 
                         <TransactionTabs />
 
