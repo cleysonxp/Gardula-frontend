@@ -46,6 +46,13 @@ export function CreateTransactionModal({
             category.type === categoryType
     )
 
+    const sortedCategories = [...filteredCategories].sort((a, b) => {
+        const nameA = getCategoryPath(a, categories)
+        const nameB = getCategoryPath(b, categories)
+
+        return nameA.localeCompare(nameB, "pt-BR")
+    })
+
     useEffect(() => {
         if (!isOpen) {
             return
@@ -94,6 +101,29 @@ export function CreateTransactionModal({
         if (newType === "transfer") {
             setAccountId("")
         }
+    }
+
+    function getCategoryPath(
+        category: CategoryResponse,
+        categories: CategoryResponse[]
+    ): string {
+        const parts = [category.name]
+        let currentParentId = category.parentCategoryId
+
+        while (currentParentId !== null) {
+            const parent = categories.find(
+                (item) => item.id === currentParentId
+            )
+
+            if (!parent) {
+                break
+            }
+
+            parts.unshift(parent.name)
+            currentParentId = parent.parentCategoryId
+        }
+
+        return parts.join(" - ")
     }
 
     async function handleTransferSubmit() {
@@ -381,9 +411,9 @@ export function CreateTransactionModal({
                                         {isLoadingCategories ? "Carregando categorias..." : "Selecione uma categoria"}
                                     </option>
 
-                                    {filteredCategories.map((category) => (
+                                    {sortedCategories.map((category) => (
                                         <option key={category.id} value={category.id}>
-                                            {category.name}
+                                            {getCategoryPath(category, categories)}
                                         </option>
                                     ))}
                                 </select>
