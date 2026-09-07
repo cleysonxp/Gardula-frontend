@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { CreateTransactionModal } from "./CreateTransactionModal"
 import { TransactionDetails } from "./TransactionDetails"
@@ -7,45 +7,52 @@ import { TransactionSummary } from "./TransactionSummary"
 import { TransactionTable } from "./TransactionTable"
 import { TransactionTabs } from "./TransactionTabs"
 
-import { getTransactionDetail, getTransactions } from "../services/transactionService"
+import {
+    getTransactionDetail,
+    getTransactions,
+} from "../services/transactionService"
+
 import { mapTransactionDetail } from "../mappers/transactionDetailMapper"
 import { mapTransactions } from "../mappers/transactionMapper"
+
 import type { Transaction } from "../types/transaction.types"
 
 export function TransactionsContent() {
     const [search, setSearch] = useState("")
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
     const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+
     const [transactions, setTransactions] = useState<Transaction[]>([])
+
     const [isLoading, setIsLoading] = useState(true)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
+
     const [error, setError] = useState<string | null>(null)
     const [detailError, setDetailError] = useState<string | null>(null)
 
-    useEffect(() => {
-        const loadTransactions = async () => {
-            try {
-                setIsLoading(true)
-                setError(null)
+    const loadTransactions = useCallback(async () => {
+        try {
+            const response = await getTransactions({
+                page: 1,
+                pageSize: 20,
+                search: search || undefined,
+            })
 
-                const response = await getTransactions({
-                    page: 1,
-                    pageSize: 20,
-                    search: search || undefined,
-                })
-
-                setTransactions(mapTransactions(response.items))
-            } catch {
-                setError("Não foi possível carregar as transações.")
-            } finally {
-                setIsLoading(false)
-            }
+            setError(null)
+            setTransactions(mapTransactions(response.items))
+        } catch {
+            setError("Não foi possível carregar as transações.")
+        } finally {
+            setIsLoading(false)
         }
-
-        loadTransactions()
     }, [search])
 
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadTransactions()
+    }, [loadTransactions])
     const handleSelectTransaction = async (transactionId: number) => {
         try {
             setSelectedTransactionId(transactionId)
@@ -74,20 +81,27 @@ export function TransactionsContent() {
         <>
             <div className="flex min-h-screen">
                 <main className="min-w-0 flex-1 px-6 py-7">
+
                     <header className="mb-7 flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                 Transações
                             </h1>
+
                             <p className="mt-1 text-sm text-slate-500">
                                 Acompanhe todas as suas movimentações financeiras
                             </p>
                         </div>
 
-                        <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+                        <button
+                            type="button"
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                        >
                             <span className="text-lg leading-none">
                                 +
                             </span>
+
                             Nova transação
                         </button>
                     </header>
@@ -95,6 +109,7 @@ export function TransactionsContent() {
                     <TransactionSummary />
 
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
                         <TransactionFilters
                             search={search}
                             onSearchChange={setSearch}
@@ -120,11 +135,14 @@ export function TransactionsContent() {
                                 onSelectTransaction={handleSelectTransaction}
                             />
                         )}
+
                     </section>
+
                 </main>
 
                 {selectedTransactionId && (
                     <aside className="hidden w-[330px] shrink-0 border-l border-slate-200 bg-white xl:block">
+
                         {isLoadingDetail && (
                             <div className="p-6 text-sm text-slate-500">
                                 Carregando detalhes...
@@ -143,13 +161,16 @@ export function TransactionsContent() {
                                 onClose={handleCloseDetails}
                             />
                         )}
+
                     </aside>
                 )}
+
             </div>
 
             <CreateTransactionModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
+                onCreated={loadTransactions}
             />
         </>
     )

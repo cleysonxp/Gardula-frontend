@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 
 import { createTransfer } from "@/features/transactions/services/transferService"
+import { createTransaction } from "@/features/transactions/services/transactionService"
 import { getAccounts, type AccountResponse } from "@/features/accounts/services/accountService"
 import { getCategories, type CategoryResponse } from "@/features/categories/services/categoryService"
 
@@ -10,11 +11,21 @@ type TransactionType = "income" | "expense" | "transfer"
 type CreateTransactionModalProps = {
     isOpen: boolean
     onClose: () => void
+    onCreated?: () => void
+}
+
+function getTodayInputValue() {
+    const today = new Date()
+    const offset = today.getTimezoneOffset()
+    const localDate = new Date(today.getTime() - offset * 60000)
+
+    return localDate.toISOString().slice(0, 10)
 }
 
 export function CreateTransactionModal({
     isOpen,
     onClose,
+    onCreated,
 }: CreateTransactionModalProps) {
     const [type, setType] = useState<TransactionType>("income")
 
@@ -29,6 +40,7 @@ export function CreateTransactionModal({
 
     const [description, setDescription] = useState("")
     const [amount, setAmount] = useState("")
+    const [date, setDate] = useState(getTodayInputValue())
 
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
     const [isLoadingCategories, setIsLoadingCategories] = useState(false)
@@ -76,6 +88,8 @@ export function CreateTransactionModal({
                 setCategories(
                     categoriesResponse.filter((category) => category.isActive)
                 )
+
+                setDate(getTodayInputValue())
             } catch {
                 setError("Não foi possível carregar os dados.")
             } finally {
@@ -126,6 +140,73 @@ export function CreateTransactionModal({
         return parts.join(" - ")
     }
 
+    async function handleTransactionSubmit() {
+        if (!accountId) {
+            setError("Selecione uma conta.")
+            return
+        }
+
+        if (!categoryId) {
+            setError("Selecione uma categoria.")
+            return
+        }
+
+        if (!description.trim()) {
+            setError("Informe uma descrição.")
+            return
+        }
+
+        const parsedAmount = Number(amount)
+
+        if (!parsedAmount || parsedAmount <= 0) {
+            setError("Informe um valor válido.")
+            return
+        }
+
+        if (!date) {
+            setError("Informe uma data.")
+            return
+        }
+
+        const transactionType = type === "income" ? 1 : 2
+
+        try {
+            setIsSaving(true)
+            setError(null)
+
+            await createTransaction({
+                accountId: Number(accountId),
+                cardId: null,
+                categoryId: Number(categoryId),
+                amount: parsedAmount,
+                type: transactionType,
+                paymentMethod: 7,
+                description: description.trim(),
+                date: new Date(`${date}T12:00:00`).toISOString(),
+                installmentGroupId: null,
+                installmentNumber: null,
+                totalInstallments: null,
+            })
+
+            setAccountId("")
+            setCategoryId("")
+            setDescription("")
+            setAmount("")
+            setDate(getTodayInputValue())
+
+            onCreated?.()
+            onClose()
+        } catch {
+            setError(
+                type === "income"
+                    ? "Não foi possível criar a entrada."
+                    : "Não foi possível criar a saída."
+            )
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     async function handleTransferSubmit() {
         if (!sourceAccountId || !destinationAccountId) {
             setError("Selecione a conta de origem e a conta de destino.")
@@ -158,12 +239,22 @@ export function CreateTransactionModal({
             setDestinationAccountId("")
             setAmount("")
 
+            onCreated?.()
             onClose()
         } catch {
             setError("Não foi possível realizar a transferência.")
         } finally {
             setIsSaving(false)
         }
+    }
+
+    function handleSubmit() {
+        if (isTransfer) {
+            handleTransferSubmit()
+            return
+        }
+
+        handleTransactionSubmit()
     }
 
     if (!isOpen) {
@@ -252,10 +343,6 @@ export function CreateTransactionModal({
                         </div>
 
                     </div>
-
-                    {/* ================================================== */}
-                    {/* FORMULÁRIO DE TRANSFERÊNCIA                       */}
-                    {/* ================================================== */}
 
                     {isTransfer ? (
                         <>
@@ -372,10 +459,6 @@ export function CreateTransactionModal({
                         </>
                     ) : (
                         <>
-                            {/* ================================================== */}
-                            {/* FORMULÁRIO DE ENTRADA / SAÍDA                     */}
-                            {/* ================================================== */}
-
                             {/* Descrição */}
                             <div className="mb-5">
 
@@ -475,13 +558,11 @@ export function CreateTransactionModal({
 
                                 <input
                                     type="date"
-                                    disabled
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-400 outline-none"
+                                    value={date}
+                                    onChange={(event) => setDate(event.target.value)}
+                                    disabled={isSaving}
+                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
-
-                                <p className="mt-1 text-xs text-slate-400">
-                                    A data será configurada na criação da transação.
-                                </p>
 
                             </div>
 
@@ -529,7 +610,7 @@ export function CreateTransactionModal({
 
                     <button
                         type="button"
-                        onClick={isTransfer ? handleTransferSubmit : undefined}
+                        onClick={handleSubmit}
                         disabled={isSaving || isLoadingAccounts || isLoadingCategories}
                         className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
