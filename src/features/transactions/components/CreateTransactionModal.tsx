@@ -5,8 +5,18 @@ import { createTransfer } from "@/features/transactions/services/transferService
 import { createTransaction } from "@/features/transactions/services/transactionService"
 import { getAccounts, type AccountResponse } from "@/features/accounts/services/accountService"
 import { getCategories, type CategoryResponse } from "@/features/categories/services/categoryService"
+import { apiClient } from "@/lib/api/apiClient"
 
 type TransactionType = "income" | "expense" | "transfer"
+
+type PaymentMethod = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+type CardResponse = {
+    id: number
+    name: string
+    lastFourDigits: string
+    isActive: boolean
+}
 
 type CreateTransactionModalProps = {
     isOpen: boolean
@@ -31,12 +41,18 @@ export function CreateTransactionModal({
 
     const [accounts, setAccounts] = useState<AccountResponse[]>([])
     const [categories, setCategories] = useState<CategoryResponse[]>([])
+    const [cards, setCards] = useState<CardResponse[]>([])
 
     const [accountId, setAccountId] = useState("")
     const [categoryId, setCategoryId] = useState("")
+    const [cardId, setCardId] = useState("")
 
     const [sourceAccountId, setSourceAccountId] = useState("")
     const [destinationAccountId, setDestinationAccountId] = useState("")
+
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(7)
+    const [isInstallment, setIsInstallment] = useState(false)
+    const [totalInstallments, setTotalInstallments] = useState("")
 
     const [description, setDescription] = useState("")
     const [amount, setAmount] = useState("")
@@ -44,11 +60,14 @@ export function CreateTransactionModal({
 
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
     const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+    const [isLoadingCards, setIsLoadingCards] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
 
     const [error, setError] = useState<string | null>(null)
 
     const isTransfer = type === "transfer"
+    const isExpense = type === "expense"
+    const isCreditCard = paymentMethod === 3
 
     const categoryType = type === "income" ? 1 : type === "expense" ? 2 : null
 
@@ -101,11 +120,52 @@ export function CreateTransactionModal({
         loadData()
     }, [isOpen])
 
+    useEffect(() => {
+        if (!isOpen || !isCreditCard || !isExpense) {
+            return
+        }
+
+        async function loadCards() {
+            try {
+                setIsLoadingCards(true)
+                setError(null)
+
+                const response = await apiClient("/Cards")
+
+                if (!response.ok) {
+                    throw new Error("Failed to load cards.")
+                }
+
+                const data = await response.json()
+
+                const cardItems = Array.isArray(data)
+                    ? data
+                    : data.items ?? []
+
+                setCards(
+                    cardItems.filter(
+                        (card: CardResponse) => card.isActive
+                    )
+                )
+            } catch {
+                setError("Não foi possível carregar os cartões.")
+            } finally {
+                setIsLoadingCards(false)
+            }
+        }
+
+        loadCards()
+    }, [isOpen, isCreditCard, isExpense])
+
     function handleTypeChange(newType: TransactionType) {
         setType(newType)
         setError(null)
 
         setCategoryId("")
+        setPaymentMethod(7)
+        setCardId("")
+        setIsInstallment(false)
+        setTotalInstallments("")
 
         if (newType !== "transfer") {
             setSourceAccountId("")
@@ -114,6 +174,32 @@ export function CreateTransactionModal({
 
         if (newType === "transfer") {
             setAccountId("")
+        }
+    }
+
+    function handlePaymentMethodChange(
+        newPaymentMethod: PaymentMethod
+    ) {
+        setPaymentMethod(newPaymentMethod)
+        setError(null)
+
+        if (newPaymentMethod !== 3) {
+            setCardId("")
+            setIsInstallment(false)
+            setTotalInstallments("")
+        }
+
+        if (newPaymentMethod === 3) {
+            setAccountId("")
+        }
+    }
+
+    function handleInstallmentChange(enabled: boolean) {
+        setIsInstallment(enabled)
+        setError(null)
+
+        if (!enabled) {
+            setTotalInstallments("")
         }
     }
 
@@ -141,8 +227,13 @@ export function CreateTransactionModal({
     }
 
     async function handleTransactionSubmit() {
-        if (!accountId) {
+        if (!accountId && !isCreditCard) {
             setError("Selecione uma conta.")
+            return
+        }
+
+        if (isCreditCard && !cardId) {
+            setError("Selecione um cartão.")
             return
         }
 
@@ -168,6 +259,21 @@ export function CreateTransactionModal({
             return
         }
 
+        let parsedTotalInstallments: number | null = null
+
+        if (isCreditCard && isInstallment) {
+            parsedTotalInstallments = Number(totalInstallments)
+
+            if (
+                !parsedTotalInstallments ||
+                parsedTotalInstallments < 2 ||
+                parsedTotalInstallments > 60
+            ) {
+                setError("Informe uma quantidade de parcelas entre 2 e 60.")
+                return
+            }
+        }
+
         const transactionType = type === "income" ? 1 : 2
 
         try {
@@ -175,21 +281,25 @@ export function CreateTransactionModal({
             setError(null)
 
             await createTransaction({
-                accountId: Number(accountId),
-                cardId: null,
+                accountId: isCreditCard ? null : Number(accountId),
+                cardId: isCreditCard ? Number(cardId) : null,
                 categoryId: Number(categoryId),
                 amount: parsedAmount,
                 type: transactionType,
-                paymentMethod: 7,
+                paymentMethod,
                 description: description.trim(),
                 date: new Date(`${date}T12:00:00`).toISOString(),
                 installmentGroupId: null,
                 installmentNumber: null,
-                totalInstallments: null,
+                totalInstallments: parsedTotalInstallments,
             })
 
             setAccountId("")
             setCategoryId("")
+            setCardId("")
+            setPaymentMethod(7)
+            setIsInstallment(false)
+            setTotalInstallments("")
             setDescription("")
             setAmount("")
             setDate(getTodayInputValue())
@@ -310,7 +420,6 @@ export function CreateTransactionModal({
 
                         <div className="grid grid-cols-3 gap-3">
 
-                            {/* Entrada */}
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("income")}
@@ -320,7 +429,6 @@ export function CreateTransactionModal({
                                 Entrada
                             </button>
 
-                            {/* Saída */}
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("expense")}
@@ -330,7 +438,6 @@ export function CreateTransactionModal({
                                 Saída
                             </button>
 
-                            {/* Transferência */}
                             <button
                                 type="button"
                                 onClick={() => handleTypeChange("transfer")}
@@ -503,31 +610,185 @@ export function CreateTransactionModal({
 
                             </div>
 
-                            {/* Conta */}
+                            {/* Forma de pagamento */}
                             <div className="mb-5">
 
                                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Conta
+                                    Forma de pagamento
                                 </label>
 
                                 <select
-                                    value={accountId}
-                                    onChange={(event) => setAccountId(event.target.value)}
-                                    disabled={isSaving || isLoadingAccounts}
+                                    value={paymentMethod}
+                                    onChange={(event) =>
+                                        handlePaymentMethodChange(
+                                            Number(event.target.value) as PaymentMethod
+                                        )
+                                    }
+                                    disabled={isSaving}
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
-                                    <option value="">
-                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione uma conta"}
+                                    <option value={7}>
+                                        Conta
                                     </option>
 
-                                    {accounts.map((account) => (
-                                        <option key={account.id} value={account.id}>
-                                            {account.name}
+                                    <option value={1}>
+                                        Pix
+                                    </option>
+
+                                    <option value={2}>
+                                        Débito
+                                    </option>
+
+                                    {isExpense && (
+                                        <option value={3}>
+                                            Cartão de crédito
                                         </option>
-                                    ))}
+                                    )}
+
+                                    <option value={4}>
+                                        Dinheiro
+                                    </option>
+
+                                    <option value={5}>
+                                        Boleto
+                                    </option>
+
+                                    <option value={6}>
+                                        Outro
+                                    </option>
+
                                 </select>
 
                             </div>
+
+                            {/* Conta */}
+                            {!isCreditCard && (
+                                <div className="mb-5">
+
+                                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Conta
+                                    </label>
+
+                                    <select
+                                        value={accountId}
+                                        onChange={(event) => setAccountId(event.target.value)}
+                                        disabled={isSaving || isLoadingAccounts}
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                    >
+                                        <option value="">
+                                            {isLoadingAccounts ? "Carregando contas..." : "Selecione uma conta"}
+                                        </option>
+
+                                        {accounts.map((account) => (
+                                            <option key={account.id} value={account.id}>
+                                                {account.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                </div>
+                            )}
+
+                            {/* Cartão */}
+                            {isCreditCard && (
+                                <>
+                                    <div className="mb-5">
+
+                                        <label className="mb-2 block text-sm font-medium text-slate-700">
+                                            Cartão
+                                        </label>
+
+                                        <select
+                                            value={cardId}
+                                            onChange={(event) => setCardId(event.target.value)}
+                                            disabled={isSaving || isLoadingCards}
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                        >
+                                            <option value="">
+                                                {isLoadingCards ? "Carregando cartões..." : "Selecione um cartão"}
+                                            </option>
+
+                                            {cards.map((card) => (
+                                                <option key={card.id} value={card.id}>
+                                                    {card.name} •••• {card.lastFourDigits}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                    </div>
+
+                                    {/* Parcelamento */}
+                                    <div className="mb-5">
+
+                                        <label className="flex cursor-pointer items-center gap-3">
+
+                                            <input
+                                                type="checkbox"
+                                                checked={isInstallment}
+                                                onChange={(event) =>
+                                                    handleInstallmentChange(
+                                                        event.target.checked
+                                                    )
+                                                }
+                                                disabled={isSaving}
+                                                className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                                            />
+
+                                            <span className="text-sm font-medium text-slate-700">
+                                                Compra parcelada
+                                            </span>
+
+                                        </label>
+
+                                    </div>
+
+                                    {isInstallment && (
+                                        <div className="mb-5">
+
+                                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                                                Número de parcelas
+                                            </label>
+
+                                            <select
+                                                value={totalInstallments}
+                                                onChange={(event) =>
+                                                    setTotalInstallments(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                disabled={isSaving}
+                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                            >
+                                                <option value="">
+                                                    Selecione
+                                                </option>
+
+                                                {Array.from(
+                                                    { length: 59 },
+                                                    (_, index) => index + 2
+                                                ).map((installment) => (
+                                                    <option
+                                                        key={installment}
+                                                        value={installment}
+                                                    >
+                                                        {installment}x
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            {amount && totalInstallments && (
+                                                <p className="mt-1 text-xs text-slate-400">
+                                                    Aproximadamente R$ {(
+                                                        Number(amount) /
+                                                        Number(totalInstallments)
+                                                    ).toFixed(2).replace(".", ",")} por parcela.
+                                                </p>
+                                            )}
+
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                             {/* Valor */}
                             <div className="mb-5">
@@ -546,6 +807,12 @@ export function CreateTransactionModal({
                                     placeholder="R$ 0,00"
                                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
+
+                                {isCreditCard && isInstallment && totalInstallments && amount && (
+                                    <p className="mt-1 text-xs text-slate-400">
+                                        Compra de R$ {Number(amount).toFixed(2).replace(".", ",")} em {totalInstallments} parcelas.
+                                    </p>
+                                )}
 
                             </div>
 
@@ -611,7 +878,7 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSaving || isLoadingAccounts || isLoadingCategories}
+                        disabled={isSaving || isLoadingAccounts || isLoadingCategories || isLoadingCards}
                         className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isSaving ? "Salvando..." : "Salvar"}
