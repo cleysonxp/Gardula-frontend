@@ -92,8 +92,27 @@ export type TransactionSummaryResponse = {
     totalTransactions: number
 }
 
-export async function getTransactionSummary(): Promise<TransactionSummaryResponse> {
-    const response = await apiClient("/Transactions/summary")
+export async function getTransactionSummary(
+    params: {
+        startDate?: string
+        endDate?: string
+    } = {}
+): Promise<TransactionSummaryResponse> {
+    const searchParams = new URLSearchParams()
+
+    if (params.startDate) {
+        searchParams.set("StartDate", params.startDate)
+    }
+
+    if (params.endDate) {
+        searchParams.set("EndDate", params.endDate)
+    }
+
+    const queryString = searchParams.toString()
+
+    const response = await apiClient(
+        `/Transactions/summary${queryString ? `?${queryString}` : ""}`
+    )
 
     if (!response.ok) {
         throw new Error("Failed to load transaction summary.")

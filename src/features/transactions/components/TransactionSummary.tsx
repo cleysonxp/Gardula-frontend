@@ -13,6 +13,8 @@ import { SummaryCard } from "./SummaryCard"
 
 type TransactionSummaryProps = {
     refreshKey: number
+    startDate: string
+    endDate: string
 }
 
 const formatCurrency = (value: number) =>
@@ -21,12 +23,15 @@ const formatCurrency = (value: number) =>
         currency: "BRL",
     }).format(value)
 
-export function TransactionSummary({ refreshKey }: TransactionSummaryProps) {
+export function TransactionSummary({
+    refreshKey,
+    startDate,
+    endDate,
+}: TransactionSummaryProps) {
     const [totalIncome, setTotalIncome] = useState(0)
     const [totalExpense, setTotalExpense] = useState(0)
     const [balance, setBalance] = useState(0)
     const [totalTransactions, setTotalTransactions] = useState(0)
-
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +40,10 @@ export function TransactionSummary({ refreshKey }: TransactionSummaryProps) {
             try {
                 setIsLoading(true)
 
-                const response = await getTransactionSummary()
+                const response = await getTransactionSummary({
+                    startDate,
+                    endDate,
+                })
 
                 setTotalIncome(response.totalIncome)
                 setTotalExpense(response.totalExpense)
@@ -51,7 +59,7 @@ export function TransactionSummary({ refreshKey }: TransactionSummaryProps) {
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         loadSummary()
-    }, [refreshKey])
+    }, [refreshKey, startDate, endDate])
 
     if (isLoading) {
         return (
