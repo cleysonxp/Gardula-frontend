@@ -84,3 +84,20 @@ export async function createTransaction(
 
     return response.json()
 }
+
+export type TransactionSummaryResponse = {
+    totalIncome: number
+    totalExpense: number
+    balance: number
+    totalTransactions: number
+}
+
+export async function getTransactionSummary(): Promise<TransactionSummaryResponse> {
+    const response = await apiClient("/Transactions/summary")
+
+    if (!response.ok) {
+        throw new Error("Failed to load transaction summary.")
+    }
+
+    return response.json()
+}

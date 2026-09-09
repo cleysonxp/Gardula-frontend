@@ -20,17 +20,14 @@ import type { Transaction } from "../types/transaction.types"
 export function TransactionsContent() {
     const [search, setSearch] = useState("")
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-
     const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
-
     const [transactions, setTransactions] = useState<Transaction[]>([])
-
     const [isLoading, setIsLoading] = useState(true)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
-
     const [error, setError] = useState<string | null>(null)
     const [detailError, setDetailError] = useState<string | null>(null)
+    const [summaryRefreshKey, setSummaryRefreshKey] = useState(0)
 
     const loadTransactions = useCallback(async () => {
         try {
@@ -53,6 +50,12 @@ export function TransactionsContent() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         loadTransactions()
     }, [loadTransactions])
+
+    const handleTransactionCreated = async () => {
+        await loadTransactions()
+        setSummaryRefreshKey((current) => current + 1)
+    }
+
     const handleSelectTransaction = async (transactionId: number) => {
         try {
             setSelectedTransactionId(transactionId)
@@ -81,39 +84,28 @@ export function TransactionsContent() {
         <>
             <div className="flex min-h-screen">
                 <main className="min-w-0 flex-1 px-6 py-7">
-
                     <header className="mb-7 flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                 Transações
                             </h1>
-
                             <p className="mt-1 text-sm text-slate-500">
                                 Acompanhe todas as suas movimentações financeiras
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
-                        >
+                        <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
                             <span className="text-lg leading-none">
                                 +
                             </span>
-
                             Nova transação
                         </button>
                     </header>
 
-                    <TransactionSummary />
+                    <TransactionSummary refreshKey={summaryRefreshKey} />
 
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-                        <TransactionFilters
-                            search={search}
-                            onSearchChange={setSearch}
-                        />
+                        <TransactionFilters search={search} onSearchChange={setSearch} />
 
                         <TransactionTabs />
 
@@ -130,19 +122,13 @@ export function TransactionsContent() {
                         )}
 
                         {!isLoading && !error && (
-                            <TransactionTable
-                                transactions={transactions}
-                                onSelectTransaction={handleSelectTransaction}
-                            />
+                            <TransactionTable transactions={transactions} onSelectTransaction={handleSelectTransaction} />
                         )}
-
                     </section>
-
                 </main>
 
                 {selectedTransactionId && (
                     <aside className="hidden w-[330px] shrink-0 border-l border-slate-200 bg-white xl:block">
-
                         {isLoadingDetail && (
                             <div className="p-6 text-sm text-slate-500">
                                 Carregando detalhes...
@@ -156,21 +142,16 @@ export function TransactionsContent() {
                         )}
 
                         {!isLoadingDetail && !detailError && selectedTransaction && (
-                            <TransactionDetails
-                                transaction={selectedTransaction}
-                                onClose={handleCloseDetails}
-                            />
+                            <TransactionDetails transaction={selectedTransaction} onClose={handleCloseDetails} />
                         )}
-
                     </aside>
                 )}
-
             </div>
 
             <CreateTransactionModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onCreated={loadTransactions}
+                onCreated={handleTransactionCreated}
             />
         </>
     )
