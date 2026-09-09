@@ -13,9 +13,18 @@ import {
     getTransactions,
 } from "../services/transactionService"
 
-import { getCategories, type CategoryResponse } from "@/features/categories/services/categoryService"
-import { getAccounts, type AccountResponse } from "@/features/accounts/services/accountService"
+import {
+    getCategories,
+    type CategoryResponse,
+} from "@/features/categories/services/categoryService"
+
+import {
+    getAccounts,
+    type AccountResponse,
+} from "@/features/accounts/services/accountService"
+
 import { getCards } from "@/features/cards/services/cardService"
+
 import type { CardResponse } from "@/features/cards/types/card.types"
 
 import { mapTransactionDetail } from "../mappers/transactionDetailMapper"
@@ -55,9 +64,16 @@ export function TransactionsContent() {
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null)
     const [selectedType, setSelectedType] = useState<number | null>(null)
 
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
     const [categories, setCategories] = useState<CategoryResponse[]>([])
     const [accounts, setAccounts] = useState<AccountResponse[]>([])
     const [cards, setCards] = useState<CardResponse[]>([])
+
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(0)
+    const [totalItems, setTotalItems] = useState(0)
+    const [pageSize] = useState(20)
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
@@ -113,13 +129,16 @@ export function TransactionsContent() {
                 accountId: selectedAccountId ?? undefined,
                 cardId: selectedCardId ?? undefined,
                 type: selectedType ?? undefined,
-                page: 1,
-                pageSize: 20,
+                sortOrder,
+                page: currentPage,
+                pageSize,
                 search: search || undefined,
             })
 
             setError(null)
             setTransactions(mapTransactions(response.items))
+            setTotalPages(response.totalPages)
+            setTotalItems(response.totalItems)
         } catch {
             setError("Não foi possível carregar as transações.")
         } finally {
@@ -132,6 +151,9 @@ export function TransactionsContent() {
         selectedAccountId,
         selectedCardId,
         selectedType,
+        sortOrder,
+        currentPage,
+        pageSize,
     ])
 
     useEffect(() => {
@@ -151,7 +173,16 @@ export function TransactionsContent() {
 
     const handleMonthChange = (month: string) => {
         setSelectedMonth(month)
+        setCurrentPage(1)
         setSummaryRefreshKey((current) => current + 1)
+    }
+
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages || page === currentPage) {
+            return
+        }
+
+        setCurrentPage(page)
     }
 
     const handleSelectTransaction = async (transactionId: number) => {
@@ -217,7 +248,10 @@ export function TransactionsContent() {
                     <section className="relative rounded-xl border border-slate-200 bg-white shadow-sm">
                         <TransactionFilters
                             search={search}
-                            onSearchChange={setSearch}
+                            onSearchChange={(value) => {
+                                setSearch(value)
+                                setCurrentPage(1)
+                            }}
                             categories={categories}
                             accounts={accounts}
                             cards={cards}
@@ -225,15 +259,35 @@ export function TransactionsContent() {
                             selectedAccountId={selectedAccountId}
                             selectedCardId={selectedCardId}
                             selectedType={selectedType}
-                            onCategoryChange={setSelectedCategoryId}
-                            onAccountChange={setSelectedAccountId}
-                            onCardChange={setSelectedCardId}
-                            onTypeChange={setSelectedType}
+                            onCategoryChange={(value) => {
+                                setSelectedCategoryId(value)
+                                setCurrentPage(1)
+                            }}
+                            onAccountChange={(value) => {
+                                setSelectedAccountId(value)
+                                setCurrentPage(1)
+                            }}
+                            onCardChange={(value) => {
+                                setSelectedCardId(value)
+                                setCurrentPage(1)
+                            }}
+                            onTypeChange={(value) => {
+                                setSelectedType(value)
+                                setCurrentPage(1)
+                            }}
                         />
 
                         <TransactionTabs
                             selectedType={selectedType}
-                            onTypeChange={setSelectedType}
+                            onTypeChange={(value) => {
+                                setSelectedType(value)
+                                setCurrentPage(1)
+                            }}
+                            sortOrder={sortOrder}
+                            onSortOrderChange={(value) => {
+                                setSortOrder(value)
+                                setCurrentPage(1)
+                            }}
                         />
 
                         {isLoading && (
@@ -252,6 +306,11 @@ export function TransactionsContent() {
                             <TransactionTable
                                 transactions={transactions}
                                 onSelectTransaction={handleSelectTransaction}
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalItems={totalItems}
+                                pageSize={pageSize}
+                                onPageChange={handlePageChange}
                             />
                         )}
                     </section>

@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/apiClient"
+
 import type { TransactionDetailResponse } from "@/features/transactions/types/transactionDetailApi.types"
 import type { TransactionListApiResponse } from "@/features/transactions/types/transactionApi.types"
 
@@ -10,6 +11,7 @@ export type GetTransactionsParams = {
     cardId?: number
     type?: number
     search?: string
+    sortOrder?: "asc" | "desc"
     page?: number
     pageSize?: number
 }
@@ -33,20 +35,46 @@ export async function getTransactions(
 ): Promise<TransactionListApiResponse> {
     const searchParams = new URLSearchParams()
 
-    if (params.startDate) searchParams.set("StartDate", params.startDate)
-    if (params.endDate) searchParams.set("EndDate", params.endDate)
-    if (params.categoryId !== undefined) searchParams.set("CategoryId", String(params.categoryId))
-    if (params.accountId !== undefined) searchParams.set("AccountId", String(params.accountId))
-    if (params.cardId !== undefined) searchParams.set("CardId", String(params.cardId))
-    if (params.type !== undefined) searchParams.set("Type", String(params.type))
-    if (params.search) searchParams.set("Search", params.search)
+    if (params.startDate) {
+        searchParams.set("StartDate", params.startDate)
+    }
+
+    if (params.endDate) {
+        searchParams.set("EndDate", params.endDate)
+    }
+
+    if (params.categoryId !== undefined) {
+        searchParams.set("CategoryId", String(params.categoryId))
+    }
+
+    if (params.accountId !== undefined) {
+        searchParams.set("AccountId", String(params.accountId))
+    }
+
+    if (params.cardId !== undefined) {
+        searchParams.set("CardId", String(params.cardId))
+    }
+
+    if (params.type !== undefined) {
+        searchParams.set("Type", String(params.type))
+    }
+
+    if (params.search) {
+        searchParams.set("Search", params.search)
+    }
+
+    if (params.sortOrder) {
+        searchParams.set("SortOrder", params.sortOrder)
+    }
 
     searchParams.set("Page", String(params.page ?? 1))
     searchParams.set("PageSize", String(params.pageSize ?? 20))
 
     const queryString = searchParams.toString()
 
-    const response = await apiClient(`/Transactions${queryString ? `?${queryString}` : ""}`)
+    const response = await apiClient(
+        `/Transactions${queryString ? `?${queryString}` : ""}`,
+    )
 
     if (!response.ok) {
         throw new Error("Failed to load transactions.")
@@ -96,7 +124,7 @@ export async function getTransactionSummary(
     params: {
         startDate?: string
         endDate?: string
-    } = {}
+    } = {},
 ): Promise<TransactionSummaryResponse> {
     const searchParams = new URLSearchParams()
 
@@ -111,7 +139,7 @@ export async function getTransactionSummary(
     const queryString = searchParams.toString()
 
     const response = await apiClient(
-        `/Transactions/summary${queryString ? `?${queryString}` : ""}`
+        `/Transactions/summary${queryString ? `?${queryString}` : ""}`,
     )
 
     if (!response.ok) {
