@@ -2,7 +2,7 @@ import { useState } from "react"
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,13 @@ import {
     type RegisterFormData,
 } from "@/features/auth/schemas/register.schema"
 
+import {
+    register as registerUser,
+} from "@/features/auth/services/authService"
+
 export function RegisterForm() {
+    const navigate = useNavigate()
+
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [registerError, setRegisterError] = useState<string | null>(null)
@@ -30,7 +36,24 @@ export function RegisterForm() {
     async function handleRegister(data: RegisterFormData) {
         setRegisterError(null)
 
-        console.log("Cadastro:", data)
+        try {
+            await registerUser({
+                name: data.name,
+                email: data.email,
+                password: data.password,
+            })
+
+            navigate("/login")
+        } catch (error) {
+            if (error instanceof Error) {
+                setRegisterError(error.message)
+                return
+            }
+
+            setRegisterError(
+                "Não foi possível criar sua conta.",
+            )
+        }
     }
 
     return (
@@ -165,7 +188,9 @@ export function RegisterForm() {
                             onClick={() => setShowPassword((current) => !current)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-white/50 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                             aria-label={
-                                showPassword ? "Ocultar senha" : "Mostrar senha"
+                                showPassword
+                                    ? "Ocultar senha"
+                                    : "Mostrar senha"
                             }
                         >
                             {showPassword ? (
@@ -200,7 +225,11 @@ export function RegisterForm() {
 
                         <Input
                             id="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
+                            type={
+                                showConfirmPassword
+                                    ? "text"
+                                    : "password"
+                            }
                             placeholder="Repita sua senha"
                             autoComplete="new-password"
                             aria-invalid={!!errors.confirmPassword}
@@ -211,7 +240,9 @@ export function RegisterForm() {
                         <button
                             type="button"
                             onClick={() =>
-                                setShowConfirmPassword((current) => !current)
+                                setShowConfirmPassword(
+                                    (current) => !current,
+                                )
                             }
                             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-white/50 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                             aria-label={
@@ -242,7 +273,9 @@ export function RegisterForm() {
                     disabled={isSubmitting}
                     className="mt-2 h-12 w-full rounded-xl bg-white font-semibold text-violet-700 shadow-lg shadow-black/10 transition-all hover:bg-violet-50 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                    {isSubmitting ? "Criando conta..." : "Criar conta"}
+                    {isSubmitting
+                        ? "Criando conta..."
+                        : "Criar conta"}
                 </Button>
             </form>
 
