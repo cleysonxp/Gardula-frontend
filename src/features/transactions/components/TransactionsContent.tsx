@@ -13,6 +13,7 @@ import { TransactionTabs } from "./TransactionTabs"
 import { EditInstallmentModal } from "./EditInstallmentModal"
 
 import {
+    deleteInstallmentGroup,
     deleteTransaction,
     getTransactionDetail,
     getTransactions,
@@ -155,13 +156,13 @@ export function TransactionsContent() {
         useState(false)
 
     const [deletingTransactionId, setDeletingTransactionId] =
-        useState<number | null>(null)
+        useState<number | string | null>(null)
 
     const [deletingTransactionDescription, setDeletingTransactionDescription] =
         useState("")
 
     const [deleteAction, setDeleteAction] =
-        useState<((id: number) => Promise<void>) | null>(null)
+        useState<((id: number | string) => Promise<void>) | null>(null)
 
     const [isEditInstallmentModalOpen, setIsEditInstallmentModalOpen] =
         useState(false)
@@ -395,24 +396,48 @@ export function TransactionsContent() {
                     transactionId,
                 )
 
-            setDeletingTransactionId(transactionId)
-
             setDeletingTransactionDescription(
                 transaction.description,
             )
 
             if (transaction.transfer) {
+                setDeletingTransactionId(
+                    transaction.transfer.id,
+                )
+
                 setDeleteAction(
                     () =>
-                        async () => {
+                        async (id) => {
                             await deleteTransfer(
-                                transaction.transfer!.id,
+                                Number(id),
+                            )
+                        },
+                )
+            } else if (transaction.installment) {
+                setDeletingTransactionId(
+                    transaction.installment.groupId,
+                )
+
+                setDeleteAction(
+                    () =>
+                        async (groupId) => {
+                            await deleteInstallmentGroup(
+                                String(groupId),
                             )
                         },
                 )
             } else {
+                setDeletingTransactionId(
+                    transactionId,
+                )
+
                 setDeleteAction(
-                    () => deleteTransaction,
+                    () =>
+                        async (id) => {
+                            await deleteTransaction(
+                                Number(id),
+                            )
+                        },
                 )
             }
 
@@ -658,7 +683,6 @@ export function TransactionsContent() {
                     handleTransactionDeleted
                 }
             />
-
         </>
     )
 }
