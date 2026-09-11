@@ -584,7 +584,7 @@ export function TransactionsContent() {
                 </main>
 
                 {selectedTransactionId && (
-                    <aside className="hidden w-[330px] shrink-0 border-l border-slate-200 bg-white xl:block">
+                    <aside className="sticky top-0 hidden h-screen w-[330px] shrink-0 border-l border-slate-200 bg-white xl:block">
                         {isLoadingDetail && (
                             <div className="p-6 text-sm text-slate-500">
                                 Carregando detalhes...
@@ -602,12 +602,10 @@ export function TransactionsContent() {
                             !detailError &&
                             selectedTransaction && (
                                 <TransactionDetails
-                                    transaction={
-                                        selectedTransaction
-                                    }
-                                    onClose={
-                                        handleCloseDetails
-                                    }
+                                    transaction={selectedTransaction}
+                                    onClose={handleCloseDetails}
+                                    onEdit={handleEditTransaction}
+                                    onDelete={handleDeleteTransaction}
                                 />
                             )}
                     </aside>
