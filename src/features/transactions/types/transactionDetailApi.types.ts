@@ -25,6 +25,8 @@ export type TransactionDetailResponse = {
         groupId: string
         number: number
         total: number
+        totalAmount: number
+        firstDate: string
     } | null
     transfer: {
         id: number

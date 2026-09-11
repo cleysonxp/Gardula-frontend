@@ -11,6 +11,8 @@ type TransactionTableProps = {
     totalItems: number
     pageSize: number
     onPageChange: (page: number) => void
+    onEditTransaction?: (transactionId: number) => void
+    onDeleteTransaction?: (transactionId: number) => void
 }
 
 export function TransactionTable({
@@ -21,6 +23,8 @@ export function TransactionTable({
     totalItems,
     pageSize,
     onPageChange,
+    onEditTransaction,
+    onDeleteTransaction,
 }: TransactionTableProps) {
     return (
         <div>
@@ -63,7 +67,15 @@ export function TransactionTable({
                             <TransactionRow
                                 key={transaction.id}
                                 transaction={transaction}
-                                onSelect={() => onSelectTransaction(transaction.id)}
+                                onSelect={() =>
+                                    onSelectTransaction(transaction.id)
+                                }
+                                onEdit={() =>
+                                    onEditTransaction?.(transaction.id)
+                                }
+                                onDelete={() =>
+                                    onDeleteTransaction?.(transaction.id)
+                                }
                             />
                         ))}
                     </tbody>

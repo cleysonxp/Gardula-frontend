@@ -30,6 +30,24 @@ export type CreateTransactionParams = {
     totalInstallments?: number | null
 }
 
+export type UpdateTransactionParams = {
+    accountId?: number | null
+    cardId?: number | null
+    categoryId: number
+    amount: number
+    type: number
+    paymentMethod: number
+    description: string
+    date: string
+}
+export type UpdateInstallmentParams = {
+    amount: number
+    description: string
+    date: string
+    categoryId: number
+    totalInstallments: number
+}
+
 export async function getTransactions(
     params: GetTransactionsParams = {},
 ): Promise<TransactionListApiResponse> {
@@ -147,4 +165,67 @@ export async function getTransactionSummary(
     }
 
     return response.json()
+}
+
+export async function updateTransaction(
+    id: number,
+    params: UpdateTransactionParams,
+) {
+    const response = await apiClient(`/Transactions/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to update transaction.")
+    }
+
+    return response.json()
+}
+
+export async function deleteTransaction(id: number): Promise<void> {
+    const response = await apiClient(`/Transactions/${id}`, {
+        method: "DELETE",
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to delete transaction.")
+    }
+}
+
+export async function updateInstallment(
+    id: number,
+    params: UpdateInstallmentParams,
+) {
+    const response = await apiClient(`/Transactions/${id}/installment`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to update installment.")
+    }
+
+    return response.json()
+}
+
+export async function deleteInstallmentGroup(
+    installmentGroupId: string,
+): Promise<void> {
+    const response = await apiClient(
+        `/Transactions/installments/${installmentGroupId}`,
+        {
+            method: "DELETE",
+        },
+    )
+
+    if (!response.ok) {
+        throw new Error("Failed to delete installment group.")
+    }
 }

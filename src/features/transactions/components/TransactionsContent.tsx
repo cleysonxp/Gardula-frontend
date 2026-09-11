@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { CreateTransactionModal } from "./CreateTransactionModal"
+import { DeleteTransactionModal } from "./DeleteTransactionModal"
+import { EditTransactionModal } from "./EditTransactionModal"
+import { EditTransferModal } from "./EditTransferModal"
 import { MonthPicker } from "./MonthPicker"
 import { TransactionDetails } from "./TransactionDetails"
 import { TransactionFilters } from "./TransactionFilters"
 import { TransactionSummary } from "./TransactionSummary"
 import { TransactionTable } from "./TransactionTable"
 import { TransactionTabs } from "./TransactionTabs"
+import { EditInstallmentModal } from "./EditInstallmentModal"
 
 import {
+    deleteTransaction,
     getTransactionDetail,
     getTransactions,
 } from "../services/transactionService"
+
+import {
+    deleteTransfer,
+} from "@/features/transactions/services/transferService"
 
 import {
     getCategories,
@@ -35,18 +44,34 @@ import type { Transaction } from "../types/transaction.types"
 const getCurrentMonth = () => {
     const now = new Date()
 
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+    return `${now.getFullYear()}-${String(
+        now.getMonth() + 1,
+    ).padStart(2, "0")}`
 }
 
 const getMonthRange = (month: string) => {
     const [year, monthNumber] = month.split("-").map(Number)
 
     const startDate = new Date(
-        Date.UTC(year, monthNumber - 1, 1, 0, 0, 0),
+        Date.UTC(
+            year,
+            monthNumber - 1,
+            1,
+            0,
+            0,
+            0,
+        ),
     )
 
     const endDate = new Date(
-        Date.UTC(year, monthNumber, 0, 23, 59, 59),
+        Date.UTC(
+            year,
+            monthNumber,
+            0,
+            23,
+            59,
+            59,
+        ),
     )
 
     return {
@@ -57,36 +82,92 @@ const getMonthRange = (month: string) => {
 
 export function TransactionsContent() {
     const [search, setSearch] = useState("")
-    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+    const [selectedMonth, setSelectedMonth] = useState(
+        getCurrentMonth(),
+    )
 
-    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
-    const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
-    const [selectedCardId, setSelectedCardId] = useState<number | null>(null)
-    const [selectedType, setSelectedType] = useState<number | null>(null)
+    const [selectedCategoryId, setSelectedCategoryId] =
+        useState<number | null>(null)
 
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+    const [selectedAccountId, setSelectedAccountId] =
+        useState<number | null>(null)
 
-    const [categories, setCategories] = useState<CategoryResponse[]>([])
-    const [accounts, setAccounts] = useState<AccountResponse[]>([])
-    const [cards, setCards] = useState<CardResponse[]>([])
+    const [selectedCardId, setSelectedCardId] =
+        useState<number | null>(null)
+
+    const [selectedType, setSelectedType] =
+        useState<number | null>(null)
+
+    const [sortOrder, setSortOrder] =
+        useState<"asc" | "desc">("desc")
+
+    const [categories, setCategories] =
+        useState<CategoryResponse[]>([])
+
+    const [accounts, setAccounts] =
+        useState<AccountResponse[]>([])
+
+    const [cards, setCards] =
+        useState<CardResponse[]>([])
 
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(0)
     const [totalItems, setTotalItems] = useState(0)
     const [pageSize] = useState(20)
 
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-    const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null)
-    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+    const [isCreateModalOpen, setIsCreateModalOpen] =
+        useState(false)
 
-    const [transactions, setTransactions] = useState<Transaction[]>([])
+    const [selectedTransactionId, setSelectedTransactionId] =
+        useState<number | null>(null)
+
+    const [selectedTransaction, setSelectedTransaction] =
+        useState<Transaction | null>(null)
+
+    const [transactions, setTransactions] =
+        useState<Transaction[]>([])
+
     const [isLoading, setIsLoading] = useState(true)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
 
-    const [error, setError] = useState<string | null>(null)
-    const [detailError, setDetailError] = useState<string | null>(null)
+    const [error, setError] =
+        useState<string | null>(null)
 
-    const [summaryRefreshKey, setSummaryRefreshKey] = useState(0)
+    const [detailError, setDetailError] =
+        useState<string | null>(null)
+
+    const [summaryRefreshKey, setSummaryRefreshKey] =
+        useState(0)
+
+    const [isEditModalOpen, setIsEditModalOpen] =
+        useState(false)
+
+    const [editingTransactionId, setEditingTransactionId] =
+        useState<number | null>(null)
+
+    const [isEditTransferModalOpen, setIsEditTransferModalOpen] =
+        useState(false)
+
+    const [editingTransferId, setEditingTransferId] =
+        useState<number | null>(null)
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] =
+        useState(false)
+
+    const [deletingTransactionId, setDeletingTransactionId] =
+        useState<number | null>(null)
+
+    const [deletingTransactionDescription, setDeletingTransactionDescription] =
+        useState("")
+
+    const [deleteAction, setDeleteAction] =
+        useState<((id: number) => Promise<void>) | null>(null)
+
+    const [isEditInstallmentModalOpen, setIsEditInstallmentModalOpen] =
+        useState(false)
+
+    const [editingInstallmentId, setEditingInstallmentId] =
+        useState<number | null>(null)
 
     const loadFilterOptions = useCallback(async () => {
         try {
@@ -101,46 +182,67 @@ export function TransactionsContent() {
             ])
 
             setCategories(
-                categoriesResponse.filter((category) => category.isActive),
+                categoriesResponse.filter(
+                    (category) => category.isActive,
+                ),
             )
 
             setAccounts(
-                accountsResponse.filter((account) => account.isActive),
+                accountsResponse.filter(
+                    (account) => account.isActive,
+                ),
             )
 
             setCards(
-                cardsResponse.filter((card) => card.isActive),
+                cardsResponse.filter(
+                    (card) => card.isActive,
+                ),
             )
         } catch (error) {
-            console.error("Erro ao carregar filtros:", error)
+            console.error(
+                "Erro ao carregar filtros:",
+                error,
+            )
         }
     }, [])
 
     const loadTransactions = useCallback(async () => {
         try {
-            const { startDate, endDate } = getMonthRange(selectedMonth)
+            const { startDate, endDate } =
+                getMonthRange(selectedMonth)
 
             setIsLoading(true)
 
             const response = await getTransactions({
                 startDate,
                 endDate,
-                categoryId: selectedCategoryId ?? undefined,
-                accountId: selectedAccountId ?? undefined,
-                cardId: selectedCardId ?? undefined,
-                type: selectedType ?? undefined,
+                categoryId:
+                    selectedCategoryId ?? undefined,
+                accountId:
+                    selectedAccountId ?? undefined,
+                cardId:
+                    selectedCardId ?? undefined,
+                type:
+                    selectedType ?? undefined,
                 sortOrder,
                 page: currentPage,
                 pageSize,
-                search: search || undefined,
+                search:
+                    search || undefined,
             })
 
             setError(null)
-            setTransactions(mapTransactions(response.items))
+
+            setTransactions(
+                mapTransactions(response.items),
+            )
+
             setTotalPages(response.totalPages)
             setTotalItems(response.totalItems)
         } catch {
-            setError("Não foi possível carregar as transações.")
+            setError(
+                "Não foi possível carregar as transações.",
+            )
         } finally {
             setIsLoading(false)
         }
@@ -168,36 +270,75 @@ export function TransactionsContent() {
 
     const handleTransactionCreated = async () => {
         await loadTransactions()
-        setSummaryRefreshKey((current) => current + 1)
+
+        setSummaryRefreshKey(
+            (current) => current + 1,
+        )
+    }
+
+    const handleTransactionUpdated = async () => {
+        await loadTransactions()
+
+        setSummaryRefreshKey(
+            (current) => current + 1,
+        )
+    }
+
+    const handleTransactionDeleted = async () => {
+        await loadTransactions()
+
+        setSummaryRefreshKey(
+            (current) => current + 1,
+        )
     }
 
     const handleMonthChange = (month: string) => {
         setSelectedMonth(month)
         setCurrentPage(1)
-        setSummaryRefreshKey((current) => current + 1)
+
+        setSummaryRefreshKey(
+            (current) => current + 1,
+        )
     }
 
     const handlePageChange = (page: number) => {
-        if (page < 1 || page > totalPages || page === currentPage) {
+        if (
+            page < 1 ||
+            page > totalPages ||
+            page === currentPage
+        ) {
             return
         }
 
         setCurrentPage(page)
     }
 
-    const handleSelectTransaction = async (transactionId: number) => {
+    const handleSelectTransaction = async (
+        transactionId: number,
+    ) => {
         try {
             setSelectedTransactionId(transactionId)
             setSelectedTransaction(null)
             setIsLoadingDetail(true)
             setDetailError(null)
 
-            const response = await getTransactionDetail(transactionId)
+            const response =
+                await getTransactionDetail(
+                    transactionId,
+                )
 
-            setSelectedTransaction(mapTransactionDetail(response))
+            setSelectedTransaction(
+                mapTransactionDetail(response),
+            )
         } catch (error) {
-            console.error("Erro ao carregar detalhes da transação:", error)
-            setDetailError("Não foi possível carregar os detalhes da transação.")
+            console.error(
+                "Erro ao carregar detalhes da transação:",
+                error,
+            )
+
+            setDetailError(
+                "Não foi possível carregar os detalhes da transação.",
+            )
         } finally {
             setIsLoadingDetail(false)
         }
@@ -209,7 +350,83 @@ export function TransactionsContent() {
         setDetailError(null)
     }
 
-    const { startDate, endDate } = getMonthRange(selectedMonth)
+    const handleEditTransaction = async (
+        transactionId: number,
+    ) => {
+        try {
+            const transaction =
+                await getTransactionDetail(
+                    transactionId,
+                )
+
+            if (transaction.transfer) {
+                setEditingTransferId(
+                    transaction.transfer.id,
+                )
+
+                setIsEditTransferModalOpen(true)
+
+                return
+            }
+
+            if (transaction.installment) {
+                setEditingInstallmentId(transactionId)
+                setIsEditInstallmentModalOpen(true)
+
+                return
+            }
+
+            setEditingTransactionId(transactionId)
+            setIsEditModalOpen(true)
+        } catch (error) {
+            console.error(
+                "Erro ao carregar transação para edição:",
+                error,
+            )
+        }
+    }
+
+    const handleDeleteTransaction = async (
+        transactionId: number,
+    ) => {
+        try {
+            const transaction =
+                await getTransactionDetail(
+                    transactionId,
+                )
+
+            setDeletingTransactionId(transactionId)
+
+            setDeletingTransactionDescription(
+                transaction.description,
+            )
+
+            if (transaction.transfer) {
+                setDeleteAction(
+                    () =>
+                        async () => {
+                            await deleteTransfer(
+                                transaction.transfer!.id,
+                            )
+                        },
+                )
+            } else {
+                setDeleteAction(
+                    () => deleteTransaction,
+                )
+            }
+
+            setIsDeleteModalOpen(true)
+        } catch (error) {
+            console.error(
+                "Erro ao carregar transação para exclusão:",
+                error,
+            )
+        }
+    }
+
+    const { startDate, endDate } =
+        getMonthRange(selectedMonth)
 
     return (
         <>
@@ -232,8 +449,17 @@ export function TransactionsContent() {
                                 onChange={handleMonthChange}
                             />
 
-                            <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
-                                <span className="text-lg leading-none">+</span>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setIsCreateModalOpen(true)
+                                }
+                                className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                            >
+                                <span className="text-lg leading-none">
+                                    +
+                                </span>
+
                                 Nova transação
                             </button>
                         </div>
@@ -255,9 +481,15 @@ export function TransactionsContent() {
                             categories={categories}
                             accounts={accounts}
                             cards={cards}
-                            selectedCategoryId={selectedCategoryId}
-                            selectedAccountId={selectedAccountId}
-                            selectedCardId={selectedCardId}
+                            selectedCategoryId={
+                                selectedCategoryId
+                            }
+                            selectedAccountId={
+                                selectedAccountId
+                            }
+                            selectedCardId={
+                                selectedCardId
+                            }
                             selectedType={selectedType}
                             onCategoryChange={(value) => {
                                 setSelectedCategoryId(value)
@@ -305,12 +537,22 @@ export function TransactionsContent() {
                         {!isLoading && !error && (
                             <TransactionTable
                                 transactions={transactions}
-                                onSelectTransaction={handleSelectTransaction}
+                                onSelectTransaction={
+                                    handleSelectTransaction
+                                }
                                 currentPage={currentPage}
                                 totalPages={totalPages}
                                 totalItems={totalItems}
                                 pageSize={pageSize}
-                                onPageChange={handlePageChange}
+                                onPageChange={
+                                    handlePageChange
+                                }
+                                onEditTransaction={
+                                    handleEditTransaction
+                                }
+                                onDeleteTransaction={
+                                    handleDeleteTransaction
+                                }
                             />
                         )}
                     </section>
@@ -324,27 +566,99 @@ export function TransactionsContent() {
                             </div>
                         )}
 
-                        {!isLoadingDetail && detailError && (
-                            <div className="p-6 text-sm text-red-500">
-                                {detailError}
-                            </div>
-                        )}
+                        {!isLoadingDetail &&
+                            detailError && (
+                                <div className="p-6 text-sm text-red-500">
+                                    {detailError}
+                                </div>
+                            )}
 
-                        {!isLoadingDetail && !detailError && selectedTransaction && (
-                            <TransactionDetails
-                                transaction={selectedTransaction}
-                                onClose={handleCloseDetails}
-                            />
-                        )}
+                        {!isLoadingDetail &&
+                            !detailError &&
+                            selectedTransaction && (
+                                <TransactionDetails
+                                    transaction={
+                                        selectedTransaction
+                                    }
+                                    onClose={
+                                        handleCloseDetails
+                                    }
+                                />
+                            )}
                     </aside>
                 )}
             </div>
 
             <CreateTransactionModal
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onCreated={handleTransactionCreated}
+                onClose={() =>
+                    setIsCreateModalOpen(false)
+                }
+                onCreated={
+                    handleTransactionCreated
+                }
             />
+
+            <EditTransactionModal
+                isOpen={isEditModalOpen}
+                transactionId={
+                    editingTransactionId
+                }
+                onClose={() => {
+                    setIsEditModalOpen(false)
+                    setEditingTransactionId(null)
+                }}
+                onUpdated={
+                    handleTransactionUpdated
+                }
+            />
+
+            <EditTransferModal
+                isOpen={
+                    isEditTransferModalOpen
+                }
+                transferId={
+                    editingTransferId
+                }
+                onClose={() => {
+                    setIsEditTransferModalOpen(false)
+                    setEditingTransferId(null)
+                }}
+                onUpdated={
+                    handleTransactionUpdated
+                }
+            />
+
+            <EditInstallmentModal
+                isOpen={isEditInstallmentModalOpen}
+                transactionId={editingInstallmentId}
+                onClose={() => {
+                    setIsEditInstallmentModalOpen(false)
+                    setEditingInstallmentId(null)
+                }}
+                onUpdated={handleTransactionUpdated}
+            />
+
+            <DeleteTransactionModal
+                isOpen={isDeleteModalOpen}
+                transactionId={
+                    deletingTransactionId
+                }
+                transactionDescription={
+                    deletingTransactionDescription
+                }
+                deleteAction={deleteAction}
+                onClose={() => {
+                    setIsDeleteModalOpen(false)
+                    setDeletingTransactionId(null)
+                    setDeletingTransactionDescription("")
+                    setDeleteAction(null)
+                }}
+                onDeleted={
+                    handleTransactionDeleted
+                }
+            />
+
         </>
     )
 }

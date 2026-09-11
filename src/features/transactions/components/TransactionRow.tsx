@@ -2,7 +2,9 @@ import {
     ArrowDown,
     ArrowLeftRight,
     ArrowUp,
-    MoreVertical,
+    Eye,
+    Pencil,
+    Trash2,
     Utensils,
     WalletCards,
 } from "lucide-react"
@@ -12,6 +14,8 @@ import type { Transaction } from "../types/transaction.types"
 type TransactionRowProps = {
     transaction: Transaction
     onSelect: () => void
+    onEdit?: () => void
+    onDelete?: () => void
 }
 
 const accountColorMap: Record<string, string> = {
@@ -19,10 +23,18 @@ const accountColorMap: Record<string, string> = {
     violet: "#8b5cf6",
 }
 
-export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
+export function TransactionRow({
+    transaction,
+    onSelect,
+    onEdit,
+    onDelete,
+}: TransactionRowProps) {
     const isIncome = transaction.type === "Entrada"
     const isTransfer = transaction.type === "Transferência"
-    const isTransferReceived = isTransfer && transaction.description.toLowerCase().includes("recebida")
+
+    const isTransferReceived =
+        isTransfer &&
+        transaction.description.toLowerCase().includes("recebida")
 
     const typeIcon = isTransfer ? (
         <ArrowLeftRight className="h-4 w-4" />
@@ -65,31 +77,41 @@ export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
     return (
         <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
             <td className="px-5 py-4 align-middle">
-                <div>
-                    <p className="text-sm text-slate-700">{transaction.date}</p>
-                    <p className="mt-1 text-xs text-slate-400">{transaction.time}</p>
+                <div className="flex flex-col">
+                    <span className="text-sm font-medium text-slate-700">
+                        {transaction.date}
+                    </span>
+                    <span className="mt-0.5 text-xs text-slate-400">
+                        {transaction.time}
+                    </span>
                 </div>
             </td>
 
             <td className="px-3 py-4 align-middle">
-                <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                        {transaction.description}
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${typeClassName}`}>
+                        {typeIcon}
+                    </div>
 
-                    {transaction.observation && (
-                        <p className="mt-1 text-xs text-slate-400">
-                            {transaction.observation}
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-700">
+                            {transaction.description}
                         </p>
-                    )}
+
+                        {transaction.observation && (
+                            <p className="mt-0.5 truncate text-xs text-slate-400">
+                                {transaction.observation}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </td>
 
             <td className="px-3 py-4 align-middle">
                 <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                         {categoryIcon}
-                    </span>
+                    </div>
 
                     <span className="text-sm text-slate-600">
                         {transaction.category}
@@ -98,21 +120,21 @@ export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
             </td>
 
             <td className="px-3 py-4 align-middle">
-                <div className="flex items-center gap-2">
-                    <span
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold text-white"
+                <div className="flex items-center gap-2.5">
+                    <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
                         style={{ backgroundColor: accountColor }}
                     >
                         {accountInitials}
-                    </span>
+                    </div>
 
-                    <div>
-                        <p className="text-sm text-slate-700">
+                    <div className="min-w-0">
+                        <p className="truncate text-sm text-slate-600">
                             {transaction.account}
                         </p>
 
                         {transaction.accountLastFour && (
-                            <p className="mt-0.5 text-xs text-slate-400">
+                            <p className="text-xs text-slate-400">
                                 •••• {transaction.accountLastFour}
                             </p>
                         )}
@@ -121,25 +143,54 @@ export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
             </td>
 
             <td className="px-3 py-4 align-middle">
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeClassName}`}>
-                    {typeIcon}
-                    {transaction.type}
-                </span>
+                <div className="flex items-center gap-2">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${typeClassName}`}>
+                        {typeIcon}
+                    </div>
+
+                    <span className="text-sm text-slate-600">
+                        {transaction.type}
+                    </span>
+                </div>
             </td>
 
-            <td className="px-3 py-4 text-right align-middle">
-                <span className={`text-sm font-semibold ${amountClassName}`}>
-                    {amountPrefix}R$ {transaction.amount.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}
-                </span>
+            <td className={`px-3 py-4 text-right align-middle text-sm font-semibold ${amountClassName}`}>
+                {amountPrefix}
+                {transaction.amount.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                })}
             </td>
 
             <td className="px-5 py-4 text-right align-middle">
-                <button type="button" onClick={onSelect} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600">
-                    <MoreVertical className="h-4 w-4" />
-                </button>
+                <div className="flex items-center justify-end gap-1">
+                    <button
+                        type="button"
+                        onClick={onSelect}
+                        title="Ver detalhes"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-600"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onEdit}
+                        title="Editar transação"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        title="Excluir transação"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                </div>
             </td>
         </tr>
     )
