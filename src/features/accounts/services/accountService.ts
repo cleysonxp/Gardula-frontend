@@ -22,8 +22,25 @@ export type AccountResponse = {
     updatedAt: string
 }
 
-export async function getAccountsOverview(): Promise<AccountOverviewResponse> {
-    const response = await apiClient("/Accounts/overview")
+export async function getAccountsOverview(
+    startDate?: string,
+    endDate?: string,
+): Promise<AccountOverviewResponse> {
+    const params = new URLSearchParams()
+
+    if (startDate) {
+        params.set("StartDate", startDate)
+    }
+
+    if (endDate) {
+        params.set("EndDate", endDate)
+    }
+
+    const queryString = params.toString()
+
+    const response = await apiClient(
+        `/Accounts/overview${queryString ? `?${queryString}` : ""}`,
+    )
 
     if (!response.ok) {
         throw new Error("Failed to load accounts overview.")
@@ -45,7 +62,9 @@ export async function createAccount(
     }
 }
 
-export async function deleteAccount(id: number): Promise<void> {
+export async function deleteAccount(
+    id: number,
+): Promise<void> {
     const response = await apiClient(`/Accounts/${id}`, {
         method: "DELETE",
     })

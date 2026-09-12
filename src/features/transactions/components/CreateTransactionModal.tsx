@@ -32,6 +32,31 @@ function getTodayInputValue() {
     return localDate.toISOString().slice(0, 10)
 }
 
+function formatCurrency(value: string) {
+    const digits = value.replace(/\D/g, "")
+
+    if (!digits) {
+        return ""
+    }
+
+    const numericValue = Number(digits) / 100
+
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(numericValue)
+}
+
+function parseCurrency(value: string) {
+    const digits = value.replace(/\D/g, "")
+
+    if (!digits) {
+        return 0
+    }
+
+    return Number(digits) / 100
+}
+
 export function CreateTransactionModal({
     isOpen,
     onClose,
@@ -69,7 +94,12 @@ export function CreateTransactionModal({
     const isExpense = type === "expense"
     const isCreditCard = paymentMethod === 3
 
-    const categoryType = type === "income" ? 1 : type === "expense" ? 2 : null
+    const categoryType =
+        type === "income"
+            ? 1
+            : type === "expense"
+                ? 2
+                : null
 
     const filteredCategories = categories.filter(
         (category) =>
@@ -95,17 +125,22 @@ export function CreateTransactionModal({
                 setIsLoadingAccounts(true)
                 setIsLoadingCategories(true)
 
-                const [accountsResponse, categoriesResponse] = await Promise.all([
-                    getAccounts(),
-                    getCategories(),
-                ])
+                const [accountsResponse, categoriesResponse] =
+                    await Promise.all([
+                        getAccounts(),
+                        getCategories(),
+                    ])
 
                 setAccounts(
-                    accountsResponse.filter((account) => account.isActive)
+                    accountsResponse.filter(
+                        (account) => account.isActive
+                    )
                 )
 
                 setCategories(
-                    categoriesResponse.filter((category) => category.isActive)
+                    categoriesResponse.filter(
+                        (category) => category.isActive
+                    )
                 )
 
                 setDate(getTodayInputValue())
@@ -247,7 +282,7 @@ export function CreateTransactionModal({
             return
         }
 
-        const parsedAmount = Number(amount)
+        const parsedAmount = parseCurrency(amount)
 
         if (!parsedAmount || parsedAmount <= 0) {
             setError("Informe um valor válido.")
@@ -269,29 +304,41 @@ export function CreateTransactionModal({
                 parsedTotalInstallments < 2 ||
                 parsedTotalInstallments > 60
             ) {
-                setError("Informe uma quantidade de parcelas entre 2 e 60.")
+                setError(
+                    "Informe uma quantidade de parcelas entre 2 e 60."
+                )
                 return
             }
         }
 
-        const transactionType = type === "income" ? 1 : 2
+        const transactionType =
+            type === "income"
+                ? 1
+                : 2
 
         try {
             setIsSaving(true)
             setError(null)
 
             await createTransaction({
-                accountId: isCreditCard ? null : Number(accountId),
-                cardId: isCreditCard ? Number(cardId) : null,
+                accountId: isCreditCard
+                    ? null
+                    : Number(accountId),
+                cardId: isCreditCard
+                    ? Number(cardId)
+                    : null,
                 categoryId: Number(categoryId),
                 amount: parsedAmount,
                 type: transactionType,
                 paymentMethod,
                 description: description.trim(),
-                date: new Date(`${date}T12:00:00`).toISOString(),
+                date: new Date(
+                    `${date}T12:00:00`
+                ).toISOString(),
                 installmentGroupId: null,
                 installmentNumber: null,
-                totalInstallments: parsedTotalInstallments,
+                totalInstallments:
+                    parsedTotalInstallments,
             })
 
             setAccountId("")
@@ -319,19 +366,25 @@ export function CreateTransactionModal({
 
     async function handleTransferSubmit() {
         if (!sourceAccountId || !destinationAccountId) {
-            setError("Selecione a conta de origem e a conta de destino.")
+            setError(
+                "Selecione a conta de origem e a conta de destino."
+            )
             return
         }
 
         if (sourceAccountId === destinationAccountId) {
-            setError("A conta de origem e destino devem ser diferentes.")
+            setError(
+                "A conta de origem e destino devem ser diferentes."
+            )
             return
         }
 
-        const parsedAmount = Number(amount)
+        const parsedAmount = parseCurrency(amount)
 
         if (!parsedAmount || parsedAmount <= 0) {
-            setError("Informe um valor válido para a transferência.")
+            setError(
+                "Informe um valor válido para a transferência."
+            )
             return
         }
 
@@ -341,7 +394,9 @@ export function CreateTransactionModal({
 
             await createTransfer({
                 sourceAccountId: Number(sourceAccountId),
-                destinationAccountId: Number(destinationAccountId),
+                destinationAccountId: Number(
+                    destinationAccountId
+                ),
                 amount: parsedAmount,
             })
 
@@ -352,7 +407,9 @@ export function CreateTransactionModal({
             onCreated?.()
             onClose()
         } catch {
-            setError("Não foi possível realizar a transferência.")
+            setError(
+                "Não foi possível realizar a transferência."
+            )
         } finally {
             setIsSaving(false)
         }
@@ -422,7 +479,9 @@ export function CreateTransactionModal({
 
                             <button
                                 type="button"
-                                onClick={() => handleTypeChange("income")}
+                                onClick={() =>
+                                    handleTypeChange("income")
+                                }
                                 disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "income" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
@@ -431,7 +490,9 @@ export function CreateTransactionModal({
 
                             <button
                                 type="button"
-                                onClick={() => handleTypeChange("expense")}
+                                onClick={() =>
+                                    handleTypeChange("expense")
+                                }
                                 disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "expense" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
@@ -440,7 +501,9 @@ export function CreateTransactionModal({
 
                             <button
                                 type="button"
-                                onClick={() => handleTypeChange("transfer")}
+                                onClick={() =>
+                                    handleTypeChange("transfer")
+                                }
                                 disabled={isSaving}
                                 className={`rounded-lg border px-4 py-3 text-sm font-medium transition ${type === "transfer" ? "border-violet-600 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
                             >
@@ -462,19 +525,33 @@ export function CreateTransactionModal({
 
                                 <select
                                     value={sourceAccountId}
-                                    onChange={(event) => setSourceAccountId(event.target.value)}
-                                    disabled={isSaving || isLoadingAccounts}
+                                    onChange={(event) =>
+                                        setSourceAccountId(
+                                            event.target.value
+                                        )
+                                    }
+                                    disabled={
+                                        isSaving ||
+                                        isLoadingAccounts
+                                    }
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
-                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione"}
+                                        {isLoadingAccounts
+                                            ? "Carregando contas..."
+                                            : "Selecione"}
                                     </option>
 
-                                    {accounts.map((account) => (
-                                        <option key={account.id} value={account.id}>
-                                            {account.name}
-                                        </option>
-                                    ))}
+                                    {accounts.map(
+                                        (account) => (
+                                            <option
+                                                key={account.id}
+                                                value={account.id}
+                                            >
+                                                {account.name}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
 
                             </div>
@@ -487,20 +564,36 @@ export function CreateTransactionModal({
                                 </label>
 
                                 <select
-                                    value={destinationAccountId}
-                                    onChange={(event) => setDestinationAccountId(event.target.value)}
-                                    disabled={isSaving || isLoadingAccounts}
+                                    value={
+                                        destinationAccountId
+                                    }
+                                    onChange={(event) =>
+                                        setDestinationAccountId(
+                                            event.target.value
+                                        )
+                                    }
+                                    disabled={
+                                        isSaving ||
+                                        isLoadingAccounts
+                                    }
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
-                                        {isLoadingAccounts ? "Carregando contas..." : "Selecione"}
+                                        {isLoadingAccounts
+                                            ? "Carregando contas..."
+                                            : "Selecione"}
                                     </option>
 
-                                    {accounts.map((account) => (
-                                        <option key={account.id} value={account.id}>
-                                            {account.name}
-                                        </option>
-                                    ))}
+                                    {accounts.map(
+                                        (account) => (
+                                            <option
+                                                key={account.id}
+                                                value={account.id}
+                                            >
+                                                {account.name}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
 
                             </div>
@@ -513,11 +606,16 @@ export function CreateTransactionModal({
                                 </label>
 
                                 <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
+                                    type="text"
+                                    inputMode="decimal"
                                     value={amount}
-                                    onChange={(event) => setAmount(event.target.value)}
+                                    onChange={(event) =>
+                                        setAmount(
+                                            formatCurrency(
+                                                event.target.value
+                                            )
+                                        )
+                                    }
                                     disabled={isSaving}
                                     placeholder="R$ 0,00"
                                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
@@ -576,7 +674,11 @@ export function CreateTransactionModal({
                                 <input
                                     type="text"
                                     value={description}
-                                    onChange={(event) => setDescription(event.target.value)}
+                                    onChange={(event) =>
+                                        setDescription(
+                                            event.target.value
+                                        )
+                                    }
                                     disabled={isSaving}
                                     placeholder="Ex.: Salário"
                                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
@@ -593,19 +695,36 @@ export function CreateTransactionModal({
 
                                 <select
                                     value={categoryId}
-                                    onChange={(event) => setCategoryId(event.target.value)}
-                                    disabled={isSaving || isLoadingCategories}
+                                    onChange={(event) =>
+                                        setCategoryId(
+                                            event.target.value
+                                        )
+                                    }
+                                    disabled={
+                                        isSaving ||
+                                        isLoadingCategories
+                                    }
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 >
                                     <option value="">
-                                        {isLoadingCategories ? "Carregando categorias..." : "Selecione uma categoria"}
+                                        {isLoadingCategories
+                                            ? "Carregando categorias..."
+                                            : "Selecione uma categoria"}
                                     </option>
 
-                                    {sortedCategories.map((category) => (
-                                        <option key={category.id} value={category.id}>
-                                            {getCategoryPath(category, categories)}
-                                        </option>
-                                    ))}
+                                    {sortedCategories.map(
+                                        (category) => (
+                                            <option
+                                                key={category.id}
+                                                value={category.id}
+                                            >
+                                                {getCategoryPath(
+                                                    category,
+                                                    categories
+                                                )}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
 
                             </div>
@@ -621,7 +740,9 @@ export function CreateTransactionModal({
                                     value={paymentMethod}
                                     onChange={(event) =>
                                         handlePaymentMethodChange(
-                                            Number(event.target.value) as PaymentMethod
+                                            Number(
+                                                event.target.value
+                                            ) as PaymentMethod
                                         )
                                     }
                                     disabled={isSaving}
@@ -671,19 +792,33 @@ export function CreateTransactionModal({
 
                                     <select
                                         value={accountId}
-                                        onChange={(event) => setAccountId(event.target.value)}
-                                        disabled={isSaving || isLoadingAccounts}
+                                        onChange={(event) =>
+                                            setAccountId(
+                                                event.target.value
+                                            )
+                                        }
+                                        disabled={
+                                            isSaving ||
+                                            isLoadingAccounts
+                                        }
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                     >
                                         <option value="">
-                                            {isLoadingAccounts ? "Carregando contas..." : "Selecione uma conta"}
+                                            {isLoadingAccounts
+                                                ? "Carregando contas..."
+                                                : "Selecione uma conta"}
                                         </option>
 
-                                        {accounts.map((account) => (
-                                            <option key={account.id} value={account.id}>
-                                                {account.name}
-                                            </option>
-                                        ))}
+                                        {accounts.map(
+                                            (account) => (
+                                                <option
+                                                    key={account.id}
+                                                    value={account.id}
+                                                >
+                                                    {account.name}
+                                                </option>
+                                            )
+                                        )}
                                     </select>
 
                                 </div>
@@ -700,19 +835,34 @@ export function CreateTransactionModal({
 
                                         <select
                                             value={cardId}
-                                            onChange={(event) => setCardId(event.target.value)}
-                                            disabled={isSaving || isLoadingCards}
+                                            onChange={(event) =>
+                                                setCardId(
+                                                    event.target.value
+                                                )
+                                            }
+                                            disabled={
+                                                isSaving ||
+                                                isLoadingCards
+                                            }
                                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                         >
                                             <option value="">
-                                                {isLoadingCards ? "Carregando cartões..." : "Selecione um cartão"}
+                                                {isLoadingCards
+                                                    ? "Carregando cartões..."
+                                                    : "Selecione um cartão"}
                                             </option>
 
-                                            {cards.map((card) => (
-                                                <option key={card.id} value={card.id}>
-                                                    {card.name} •••• {card.lastFourDigits}
-                                                </option>
-                                            ))}
+                                            {cards.map(
+                                                (card) => (
+                                                    <option
+                                                        key={card.id}
+                                                        value={card.id}
+                                                    >
+                                                        {card.name} ••••{" "}
+                                                        {card.lastFourDigits}
+                                                    </option>
+                                                )
+                                            )}
                                         </select>
 
                                     </div>
@@ -724,13 +874,20 @@ export function CreateTransactionModal({
 
                                             <input
                                                 type="checkbox"
-                                                checked={isInstallment}
-                                                onChange={(event) =>
+                                                checked={
+                                                    isInstallment
+                                                }
+                                                onChange={(
+                                                    event
+                                                ) =>
                                                     handleInstallmentChange(
-                                                        event.target.checked
+                                                        event.target
+                                                            .checked
                                                     )
                                                 }
-                                                disabled={isSaving}
+                                                disabled={
+                                                    isSaving
+                                                }
                                                 className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                                             />
 
@@ -743,47 +900,130 @@ export function CreateTransactionModal({
                                     </div>
 
                                     {isInstallment && (
-                                        <div className="mb-5">
+                                        <div className="mb-5 grid grid-cols-2 gap-4">
 
-                                            <label className="mb-2 block text-sm font-medium text-slate-700">
-                                                Número de parcelas
-                                            </label>
+                                            {/* Valor total */}
+                                            <div>
 
-                                            <select
-                                                value={totalInstallments}
-                                                onChange={(event) =>
-                                                    setTotalInstallments(
-                                                        event.target.value
-                                                    )
-                                                }
-                                                disabled={isSaving}
-                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
-                                            >
-                                                <option value="">
-                                                    Selecione
-                                                </option>
+                                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                                    Valor total
+                                                </label>
 
-                                                {Array.from(
-                                                    { length: 59 },
-                                                    (_, index) => index + 2
-                                                ).map((installment) => (
-                                                    <option
-                                                        key={installment}
-                                                        value={installment}
-                                                    >
-                                                        {installment}x
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                <input
+                                                    type="text"
+                                                    inputMode="decimal"
+                                                    value={amount}
+                                                    onChange={(
+                                                        event
+                                                    ) =>
+                                                        setAmount(
+                                                            formatCurrency(
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        isSaving
+                                                    }
+                                                    placeholder="R$ 0,00"
+                                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                                />
 
-                                            {amount && totalInstallments && (
                                                 <p className="mt-1 text-xs text-slate-400">
-                                                    Aproximadamente R$ {(
-                                                        Number(amount) /
-                                                        Number(totalInstallments)
-                                                    ).toFixed(2).replace(".", ",")} por parcela.
+                                                    Valor total da compra.
                                                 </p>
-                                            )}
+
+                                            </div>
+
+                                            {/* Número de parcelas */}
+                                            <div>
+
+                                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                                    Número de parcelas
+                                                </label>
+
+                                                <select
+                                                    value={
+                                                        totalInstallments
+                                                    }
+                                                    onChange={(
+                                                        event
+                                                    ) =>
+                                                        setTotalInstallments(
+                                                            event
+                                                                .target
+                                                                .value
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        isSaving
+                                                    }
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                                >
+                                                    <option value="">
+                                                        Selecione
+                                                    </option>
+
+                                                    {Array.from(
+                                                        {
+                                                            length: 59,
+                                                        },
+                                                        (
+                                                            _,
+                                                            index
+                                                        ) =>
+                                                            index +
+                                                            2
+                                                    ).map(
+                                                        (
+                                                            installment
+                                                        ) => (
+                                                            <option
+                                                                key={
+                                                                    installment
+                                                                }
+                                                                value={
+                                                                    installment
+                                                                }
+                                                            >
+                                                                {
+                                                                    installment
+                                                                }
+                                                                x
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+
+                                                {amount &&
+                                                    totalInstallments &&
+                                                    parseCurrency(
+                                                        amount
+                                                    ) > 0 && (
+                                                        <p className="mt-1 text-xs text-slate-400">
+                                                            Aproximadamente R${" "}
+                                                            {(
+                                                                parseCurrency(
+                                                                    amount
+                                                                ) /
+                                                                Number(
+                                                                    totalInstallments
+                                                                )
+                                                            )
+                                                                .toFixed(
+                                                                    2
+                                                                )
+                                                                .replace(
+                                                                    ".",
+                                                                    ","
+                                                                )}{" "}
+                                                            por parcela.
+                                                        </p>
+                                                    )}
+
+                                            </div>
 
                                         </div>
                                     )}
@@ -791,30 +1031,31 @@ export function CreateTransactionModal({
                             )}
 
                             {/* Valor */}
-                            <div className="mb-5">
+                            {!isInstallment && (
+                                <div className="mb-5">
 
-                                <label className="mb-2 block text-sm font-medium text-slate-700">
-                                    Valor
-                                </label>
+                                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                                        Valor
+                                    </label>
 
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={amount}
-                                    onChange={(event) => setAmount(event.target.value)}
-                                    disabled={isSaving}
-                                    placeholder="R$ 0,00"
-                                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
-                                />
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={amount}
+                                        onChange={(event) =>
+                                            setAmount(
+                                                formatCurrency(
+                                                    event.target.value
+                                                )
+                                            )
+                                        }
+                                        disabled={isSaving}
+                                        placeholder="R$ 0,00"
+                                        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                    />
 
-                                {isCreditCard && isInstallment && totalInstallments && amount && (
-                                    <p className="mt-1 text-xs text-slate-400">
-                                        Compra de R$ {Number(amount).toFixed(2).replace(".", ",")} em {totalInstallments} parcelas.
-                                    </p>
-                                )}
-
-                            </div>
+                                </div>
+                            )}
 
                             {/* Data */}
                             <div className="mb-5">
@@ -826,7 +1067,11 @@ export function CreateTransactionModal({
                                 <input
                                     type="date"
                                     value={date}
-                                    onChange={(event) => setDate(event.target.value)}
+                                    onChange={(event) =>
+                                        setDate(
+                                            event.target.value
+                                        )
+                                    }
                                     disabled={isSaving}
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 disabled:bg-slate-50 disabled:text-slate-400"
                                 />
@@ -878,10 +1123,17 @@ export function CreateTransactionModal({
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSaving || isLoadingAccounts || isLoadingCategories || isLoadingCards}
+                        disabled={
+                            isSaving ||
+                            isLoadingAccounts ||
+                            isLoadingCategories ||
+                            isLoadingCards
+                        }
                         className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {isSaving ? "Salvando..." : "Salvar"}
+                        {isSaving
+                            ? "Salvando..."
+                            : "Salvar"}
                     </button>
 
                 </div>
