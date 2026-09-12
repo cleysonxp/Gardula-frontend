@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { AccountHeader } from "@/features/accounts/components/AccountHeader"
 import { AccountSummary } from "@/features/accounts/components/AccountSummary"
@@ -20,7 +20,7 @@ import type {
 
 import {
     deleteAccount,
-    getAccountsOverview
+    getAccountsOverview,
 } from "@/features/accounts/services/accountService"
 
 function formatCurrency(value: number) {
@@ -30,11 +30,59 @@ function formatCurrency(value: number) {
     }).format(value)
 }
 
+function getCurrentMonth() {
+    const now = new Date()
+
+    return `${now.getFullYear()}-${String(
+        now.getMonth() + 1,
+    ).padStart(2, "0")}`
+}
+
+function getMonthRange(month: string) {
+    const [year, monthNumber] = month.split("-").map(Number)
+
+    const startDate = new Date(
+        year,
+        monthNumber - 1,
+        1,
+    )
+
+    const endDate = new Date(
+        year,
+        monthNumber,
+        0,
+        23,
+        59,
+        59,
+        999,
+    )
+
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, "0")
+        const day = String(date.getDate()).padStart(2, "0")
+        const hours = String(date.getHours()).padStart(2, "0")
+        const minutes = String(date.getMinutes()).padStart(2, "0")
+        const seconds = String(date.getSeconds()).padStart(2, "0")
+        const milliseconds = String(date.getMilliseconds()).padStart(3, "0")
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}-03:00`
+    }
+
+    return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+    }
+}
+
 export function AccountsPage() {
     const [selectedAccount, setSelectedAccount] =
         useState<Account | null>(null)
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+    const [selectedMonth, setSelectedMonth] =
+        useState(getCurrentMonth())
 
     const [overview, setOverview] =
         useState<AccountOverviewResponse | null>(null)
@@ -48,12 +96,18 @@ export function AccountsPage() {
 
     const [isDeleting, setIsDeleting] = useState(false)
 
-    async function loadAccountsOverview() {
+    const loadAccountsOverview = useCallback(async () => {
         try {
             setIsLoading(true)
             setError(null)
 
-            const data = await getAccountsOverview()
+            const { startDate, endDate } =
+                getMonthRange(selectedMonth)
+
+            const data = await getAccountsOverview(
+                startDate,
+                endDate,
+            )
 
             setOverview(data)
         } catch (error) {
@@ -63,21 +117,29 @@ export function AccountsPage() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [selectedMonth])
 
     useEffect(() => {
         let cancelled = false
 
-        async function loadInitialOverview() {
+        async function loadOverview() {
             try {
-                const data = await getAccountsOverview()
+                setIsLoading(true)
+                setError(null)
+
+                const { startDate, endDate } =
+                    getMonthRange(selectedMonth)
+
+                const data = await getAccountsOverview(
+                    startDate,
+                    endDate,
+                )
 
                 if (cancelled) {
                     return
                 }
 
                 setOverview(data)
-                setError(null)
             } catch (error) {
                 if (cancelled) {
                     return
@@ -93,12 +155,12 @@ export function AccountsPage() {
             }
         }
 
-        loadInitialOverview()
+        loadOverview()
 
         return () => {
             cancelled = true
         }
-    }, [])
+    }, [selectedMonth])
 
     function handleAccountDetails(account: Account) {
         setSelectedAccount(account)
@@ -141,6 +203,8 @@ export function AccountsPage() {
                 {/* Área principal */}
                 <section className="min-w-0 flex-1 px-6 py-6 lg:px-7">
                     <AccountHeader
+                        selectedMonth={selectedMonth}
+                        onMonthChange={setSelectedMonth}
                         onNewAccount={() => setIsCreateModalOpen(true)}
                     />
 
@@ -281,6 +345,5 @@ export function AccountsPage() {
                 />
             )}
         </div>
-
     )
 }

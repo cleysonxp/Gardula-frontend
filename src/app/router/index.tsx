@@ -8,6 +8,7 @@ import { CardsPage } from "@/pages/CardsPage"
 import { TransactionsPage } from "@/pages/TransactionsPage"
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute"
 import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
+import { RecurringPage } from "@/pages/RecurringPage";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
           {
             path: "/transactions",
             element: <TransactionsPage />,
+          },
+          {
+            path: "/recurring",
+            element: <RecurringPage />,
           },
         ],
       },
