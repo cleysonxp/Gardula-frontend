@@ -1,3 +1,5 @@
+import type { TransactionListApiResponse } from "@/features/transactions/types/transactionApi.types"
+
 export type AccountOverviewItem = {
     id: number
     name: string
@@ -84,4 +86,25 @@ export type AccountTransaction = {
     description: string
     value: number
     type: "Entrada" | "Saída"
+}
+
+export type AccountDetailOverviewResponse = {
+    account: {
+        id: number
+        name: string
+        type: number
+        initialBalance: number
+        color: string
+        isActive: boolean
+        createdAt: string
+        updatedAt: string
+    }
+    currentBalance: number
+    summary: {
+        totalIncome: number
+        totalExpense: number
+        balance: number
+        totalTransactions: number
+    }
+    transactions: TransactionListApiResponse
 }

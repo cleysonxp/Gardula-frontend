@@ -8,19 +8,17 @@ import { AccountDetails } from "@/features/accounts/components/AccountDetails"
 import { CreateAccountModal } from "@/features/accounts/components/CreateAccountModal"
 import { DeleteAccountModal } from "@/features/accounts/components/DeleteAccountModal"
 
-import {
-    mockAccountTransactions,
-} from "@/features/accounts/data/mockAccounts"
-
 import { mapAccountTransaction } from "@/features/accounts/mappers/accountTransactionMapper"
 
 import type {
     Account,
+    AccountDetailOverviewResponse,
     AccountOverviewResponse,
 } from "@/features/accounts/types/account"
 
 import {
     deleteAccount,
+    getAccountDetailOverview,
     getAccountsOverview,
 } from "@/features/accounts/services/accountService"
 
@@ -76,9 +74,164 @@ function getMonthRange(month: string) {
     }
 }
 
+function mapAccountType(type: number) {
+    if (type === 1) {
+        return "Conta corrente"
+    }
+
+    if (type === 2) {
+        return "Conta poupança"
+    }
+
+    if (type === 3) {
+        return "Dinheiro em espécie"
+    }
+
+    if (type === 4) {
+        return "Investimentos"
+    }
+
+    return "Outro"
+}
+
+function mapAccountColor(color: string) {
+    if (color === "blue") {
+        return "bg-blue-600"
+    }
+
+    if (color === "violet") {
+        return "bg-violet-600"
+    }
+
+    if (color === "green") {
+        return "bg-emerald-600"
+    }
+
+    if (color === "orange") {
+        return "bg-orange-500"
+    }
+
+    if (color === "red") {
+        return "bg-red-600"
+    }
+
+    if (color === "pink") {
+        return "bg-pink-500"
+    }
+
+    if (color === "amber") {
+        return "bg-amber-500"
+    }
+
+    if (color === "slate") {
+        return "bg-slate-700"
+    }
+
+    return "bg-slate-600"
+}
+
+function mapAccountTextColor(color: string) {
+    if (color === "blue") {
+        return "text-blue-600"
+    }
+
+    if (color === "violet") {
+        return "text-violet-600"
+    }
+
+    if (color === "green") {
+        return "text-emerald-600"
+    }
+
+    if (color === "orange") {
+        return "text-orange-500"
+    }
+
+    if (color === "red") {
+        return "text-red-600"
+    }
+
+    if (color === "pink") {
+        return "text-pink-500"
+    }
+
+    if (color === "amber") {
+        return "text-amber-500"
+    }
+
+    if (color === "slate") {
+        return "text-slate-700"
+    }
+
+    return "text-slate-600"
+}
+
+function mapOverviewAccount(
+    account: AccountOverviewResponse["accounts"][number],
+): Account {
+    return {
+        id: account.id,
+        name: account.name,
+        type: mapAccountType(account.type),
+        balance: account.currentBalance,
+        income: account.income,
+        expenses: account.expense,
+        initial: account.name
+            .trim()
+            .charAt(0)
+            .toUpperCase(),
+        icon:
+            account.type === 3
+                ? "wallet"
+                : account.name
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase(),
+        color: mapAccountColor(account.color),
+        textColor: mapAccountTextColor(account.color),
+    }
+}
+
+function mapDetailAccount(
+    detail: AccountDetailOverviewResponse,
+    fallback: Account,
+): Account {
+    return {
+        ...fallback,
+        id: detail.account.id,
+        name: detail.account.name,
+        type: mapAccountType(detail.account.type),
+        balance: detail.currentBalance,
+        income: detail.summary.totalIncome,
+        expenses: detail.summary.totalExpense,
+        initial: detail.account.name
+            .trim()
+            .charAt(0)
+            .toUpperCase(),
+        icon:
+            detail.account.type === 3
+                ? "wallet"
+                : detail.account.name
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase(),
+        color: mapAccountColor(detail.account.color),
+        textColor: mapAccountTextColor(detail.account.color),
+    }
+}
+
 export function AccountsPage() {
     const [selectedAccount, setSelectedAccount] =
         useState<Account | null>(null)
+
+    const [accountDetail, setAccountDetail] =
+        useState<AccountDetailOverviewResponse | null>(null)
+
+    const [isDetailLoading, setIsDetailLoading] =
+        useState(false)
+
+    const [detailError, setDetailError] =
+        useState<string | null>(null)
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
@@ -163,7 +316,65 @@ export function AccountsPage() {
         }
     }, [selectedMonth])
 
+    useEffect(() => {
+        if (!selectedAccount) {
+            setAccountDetail(null)
+            setDetailError(null)
+            return
+        }
+
+        let cancelled = false
+
+        async function loadAccountDetail() {
+            try {
+                setIsDetailLoading(true)
+                setDetailError(null)
+
+                const { startDate, endDate } =
+                    getMonthRange(selectedMonth)
+
+                const data = await getAccountDetailOverview(
+                    selectedAccount.id,
+                    startDate,
+                    endDate,
+                )
+
+                if (cancelled) {
+                    return
+                }
+
+                setAccountDetail(data)
+            } catch (error) {
+                if (cancelled) {
+                    return
+                }
+
+                console.error(
+                    "Erro ao carregar detalhes da conta:",
+                    error,
+                )
+
+                setAccountDetail(null)
+                setDetailError(
+                    "Não foi possível carregar os detalhes da conta.",
+                )
+            } finally {
+                if (!cancelled) {
+                    setIsDetailLoading(false)
+                }
+            }
+        }
+
+        loadAccountDetail()
+
+        return () => {
+            cancelled = true
+        }
+    }, [selectedAccount, selectedMonth])
+
     function handleAccountDetails(account: Account) {
+        setAccountDetail(null)
+        setDetailError(null)
         setSelectedAccount(account)
     }
 
@@ -196,6 +407,8 @@ export function AccountsPage() {
 
     function handleCloseDetails() {
         setSelectedAccount(null)
+        setAccountDetail(null)
+        setDetailError(null)
     }
 
     const recentTransactions =
@@ -203,10 +416,22 @@ export function AccountsPage() {
             mapAccountTransaction,
         ) ?? []
 
+    const detailAccount =
+        accountDetail && selectedAccount
+            ? mapDetailAccount(
+                accountDetail,
+                selectedAccount,
+            )
+            : selectedAccount
+
+    const detailTransactions =
+        accountDetail?.transactions.items.map(
+            mapAccountTransaction,
+        ) ?? []
+
     return (
         <div className="min-h-screen bg-[#F7F7FC]">
             <div className="flex min-h-screen">
-                {/* Área principal */}
                 <section className="min-w-0 flex-1 px-6 py-6 lg:px-7">
                     <AccountHeader
                         selectedMonth={selectedMonth}
@@ -214,7 +439,6 @@ export function AccountsPage() {
                         onNewAccount={() => setIsCreateModalOpen(true)}
                     />
 
-                    {/* Loading */}
                     {isLoading && (
                         <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
                             <p className="text-sm text-slate-500">
@@ -223,7 +447,6 @@ export function AccountsPage() {
                         </div>
                     )}
 
-                    {/* Erro */}
                     {!isLoading && error && (
                         <div className="mb-8 rounded-xl border border-red-200 bg-red-50 p-6">
                             <p className="text-sm text-red-600">
@@ -232,7 +455,6 @@ export function AccountsPage() {
                         </div>
                     )}
 
-                    {/* Dados reais */}
                     {!isLoading && !error && overview && (
                         <>
                             <AccountSummary
@@ -245,70 +467,7 @@ export function AccountsPage() {
 
                             <AccountList
                                 accounts={overview.accounts.map(
-                                    (account) => ({
-                                        id: account.id,
-                                        name: account.name,
-                                        type:
-                                            account.type === 1
-                                                ? "Conta corrente"
-                                                : account.type === 2
-                                                    ? "Conta poupança"
-                                                    : account.type === 3
-                                                        ? "Dinheiro em espécie"
-                                                        : account.type === 4
-                                                            ? "Investimentos"
-                                                            : "Outro",
-                                        balance: account.currentBalance,
-                                        income: account.income,
-                                        expenses: account.expense,
-                                        initial: account.name
-                                            .trim()
-                                            .charAt(0)
-                                            .toUpperCase(),
-                                        icon:
-                                            account.type === 3
-                                                ? "wallet"
-                                                : account.name
-                                                    .trim()
-                                                    .charAt(0)
-                                                    .toUpperCase(),
-                                        color:
-                                            account.color === "blue"
-                                                ? "bg-blue-600"
-                                                : account.color === "violet"
-                                                    ? "bg-violet-600"
-                                                    : account.color === "green"
-                                                        ? "bg-emerald-600"
-                                                        : account.color === "orange"
-                                                            ? "bg-orange-500"
-                                                            : account.color === "red"
-                                                                ? "bg-red-600"
-                                                                : account.color === "pink"
-                                                                    ? "bg-pink-500"
-                                                                    : account.color === "amber"
-                                                                        ? "bg-amber-500"
-                                                                        : account.color === "slate"
-                                                                            ? "bg-slate-700"
-                                                                            : "bg-slate-600",
-                                        textColor:
-                                            account.color === "blue"
-                                                ? "text-blue-600"
-                                                : account.color === "violet"
-                                                    ? "text-violet-600"
-                                                    : account.color === "green"
-                                                        ? "text-emerald-600"
-                                                        : account.color === "orange"
-                                                            ? "text-orange-500"
-                                                            : account.color === "red"
-                                                                ? "text-red-600"
-                                                                : account.color === "pink"
-                                                                    ? "text-pink-500"
-                                                                    : account.color === "amber"
-                                                                        ? "text-amber-500"
-                                                                        : account.color === "slate"
-                                                                            ? "text-slate-700"
-                                                                            : "text-slate-600",
-                                    }),
+                                    mapOverviewAccount,
                                 )}
                                 onDetails={handleAccountDetails}
                                 onDelete={handleAccountDelete}
@@ -322,18 +481,16 @@ export function AccountsPage() {
                     )}
                 </section>
 
-                {/* Drawer de detalhes */}
-                {selectedAccount && (
+                {selectedAccount && detailAccount && (
                     <AccountDetails
-                        account={selectedAccount}
-                        transactions={mockAccountTransactions}
+                        account={detailAccount}
+                        transactions={detailTransactions}
                         formatCurrency={formatCurrency}
                         onClose={handleCloseDetails}
                     />
                 )}
             </div>
 
-            {/* Modal de nova conta */}
             {isCreateModalOpen && (
                 <CreateAccountModal
                     onClose={() => setIsCreateModalOpen(false)}

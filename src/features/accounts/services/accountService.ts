@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/apiClient"
 
 import type {
+    AccountDetailOverviewResponse,
     AccountOverviewResponse,
 } from "@/features/accounts/types/account"
 
@@ -79,6 +80,34 @@ export async function getAccounts(): Promise<AccountResponse[]> {
 
     if (!response.ok) {
         throw new Error("Failed to load accounts.")
+    }
+
+    return response.json()
+}
+
+export async function getAccountDetailOverview(
+    id: number,
+    startDate?: string,
+    endDate?: string,
+): Promise<AccountDetailOverviewResponse> {
+    const params = new URLSearchParams()
+
+    if (startDate) {
+        params.set("StartDate", startDate)
+    }
+
+    if (endDate) {
+        params.set("EndDate", endDate)
+    }
+
+    const queryString = params.toString()
+
+    const response = await apiClient(
+        `/Accounts/${id}/overview${queryString ? `?${queryString}` : ""}`,
+    )
+
+    if (!response.ok) {
+        throw new Error("Failed to load account detail overview.")
     }
 
     return response.json()
