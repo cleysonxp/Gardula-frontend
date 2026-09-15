@@ -7,6 +7,7 @@ function getTransactionType(
     transaction: AccountOverviewTransaction,
 ): "Entrada" | "Saída" {
     if (
+        transaction.type === 1 ||
         transaction.typeName.toLowerCase() === "income" ||
         transaction.typeName.toLowerCase() === "entrada"
     ) {
@@ -16,13 +17,7 @@ function getTransactionType(
     return "Saída"
 }
 
-function getCategoryColor(
-    transaction: AccountOverviewTransaction,
-): string {
-    if (!transaction.category) {
-        return "bg-slate-400"
-    }
-
+function getCategoryColor(): string {
     return "bg-slate-400"
 }
 
@@ -41,7 +36,7 @@ export function mapAccountTransaction(
         description: transaction.description,
         account: transaction.account?.name ?? "Sem conta",
         category: transaction.category?.name ?? "Sem categoria",
-        categoryColor: getCategoryColor(transaction),
+        categoryColor: getCategoryColor(),
         type: getTransactionType(transaction),
         value: transaction.amount,
     }

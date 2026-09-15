@@ -9,12 +9,48 @@ export type AccountOverviewItem = {
     expense: number
 }
 
+export type AccountOverviewTransaction = {
+    id: number
+    description: string
+    amount: number
+    date: string
+    type: number
+    typeName: string
+    paymentMethod: number
+    paymentMethodName: string
+    category: {
+        id: number
+        name: string
+    } | null
+    account: {
+        id: number
+        name: string
+        color: string
+    } | null
+    card: {
+        id: number
+        name: string
+        lastFourDigits: string
+    } | null
+    installment: {
+        groupId: string
+        number: number
+        total: number
+    } | null
+    transfer: {
+        id: number
+        sourceAccountId: number
+        destinationAccountId: number
+    } | null
+}
+
 export type AccountOverviewResponse = {
     totalBalance: number
     activeAccounts: number
     totalIncome: number
     totalExpense: number
     accounts: AccountOverviewItem[]
+    recentTransactions: AccountOverviewTransaction[]
 }
 
 // ---------------------------------------------------------------------------

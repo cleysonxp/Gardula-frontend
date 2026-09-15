@@ -9,9 +9,10 @@ import { CreateAccountModal } from "@/features/accounts/components/CreateAccount
 import { DeleteAccountModal } from "@/features/accounts/components/DeleteAccountModal"
 
 import {
-    mockTransactions,
     mockAccountTransactions,
 } from "@/features/accounts/data/mockAccounts"
+
+import { mapAccountTransaction } from "@/features/accounts/mappers/accountTransactionMapper"
 
 import type {
     Account,
@@ -197,6 +198,11 @@ export function AccountsPage() {
         setSelectedAccount(null)
     }
 
+    const recentTransactions =
+        overview?.recentTransactions.map(
+            mapAccountTransaction,
+        ) ?? []
+
     return (
         <div className="min-h-screen bg-[#F7F7FC]">
             <div className="flex min-h-screen">
@@ -307,14 +313,13 @@ export function AccountsPage() {
                                 onDetails={handleAccountDetails}
                                 onDelete={handleAccountDelete}
                             />
+
+                            <RecentTransactions
+                                transactions={recentTransactions}
+                                formatCurrency={formatCurrency}
+                            />
                         </>
                     )}
-
-                    {/* Transactions continuam mockadas por enquanto */}
-                    <RecentTransactions
-                        transactions={mockTransactions}
-                        formatCurrency={formatCurrency}
-                    />
                 </section>
 
                 {/* Drawer de detalhes */}
