@@ -6,6 +6,7 @@ import { AccountList } from "@/features/accounts/components/AccountList"
 import { RecentTransactions } from "@/features/accounts/components/RecentTransactions"
 import { AccountDetails } from "@/features/accounts/components/AccountDetails"
 import { CreateAccountModal } from "@/features/accounts/components/CreateAccountModal"
+import { EditAccountModal } from "@/features/accounts/components/EditAccountModal"
 import { DeleteAccountModal } from "@/features/accounts/components/DeleteAccountModal"
 
 import { mapAccountTransaction } from "@/features/accounts/mappers/accountTransactionMapper"
@@ -224,6 +225,9 @@ export function AccountsPage() {
     const [selectedAccount, setSelectedAccount] =
         useState<Account | null>(null)
 
+    const [accountToEdit, setAccountToEdit] =
+        useState<Account | null>(null)
+
     const [accountDetail, setAccountDetail] =
         useState<AccountDetailOverviewResponse | null>(null)
 
@@ -233,7 +237,8 @@ export function AccountsPage() {
     const [detailError, setDetailError] =
         useState<string | null>(null)
 
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const [isCreateModalOpen, setIsCreateModalOpen] =
+        useState(false)
 
     const [selectedMonth, setSelectedMonth] =
         useState(getCurrentMonth())
@@ -241,14 +246,17 @@ export function AccountsPage() {
     const [overview, setOverview] =
         useState<AccountOverviewResponse | null>(null)
 
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] =
+        useState(true)
 
-    const [error, setError] = useState<string | null>(null)
+    const [error, setError] =
+        useState<string | null>(null)
 
     const [accountToDelete, setAccountToDelete] =
         useState<Account | null>(null)
 
-    const [isDeleting, setIsDeleting] = useState(false)
+    const [isDeleting, setIsDeleting] =
+        useState(false)
 
     const loadAccountsOverview = useCallback(async () => {
         try {
@@ -355,6 +363,7 @@ export function AccountsPage() {
                 )
 
                 setAccountDetail(null)
+
                 setDetailError(
                     "Não foi possível carregar os detalhes da conta.",
                 )
@@ -376,6 +385,10 @@ export function AccountsPage() {
         setAccountDetail(null)
         setDetailError(null)
         setSelectedAccount(account)
+    }
+
+    function handleAccountEdit(account: Account) {
+        setAccountToEdit(account)
     }
 
     function handleAccountDelete(account: Account) {
@@ -436,7 +449,9 @@ export function AccountsPage() {
                     <AccountHeader
                         selectedMonth={selectedMonth}
                         onMonthChange={setSelectedMonth}
-                        onNewAccount={() => setIsCreateModalOpen(true)}
+                        onNewAccount={() =>
+                            setIsCreateModalOpen(true)
+                        }
                     />
 
                     {isLoading && (
@@ -470,6 +485,7 @@ export function AccountsPage() {
                                     mapOverviewAccount,
                                 )}
                                 onDetails={handleAccountDetails}
+                                onEdit={handleAccountEdit}
                                 onDelete={handleAccountDelete}
                             />
 
@@ -493,8 +509,18 @@ export function AccountsPage() {
 
             {isCreateModalOpen && (
                 <CreateAccountModal
-                    onClose={() => setIsCreateModalOpen(false)}
+                    onClose={() =>
+                        setIsCreateModalOpen(false)
+                    }
                     onCreated={loadAccountsOverview}
+                />
+            )}
+
+            {accountToEdit && (
+                <EditAccountModal
+                    account={accountToEdit}
+                    onClose={() => setAccountToEdit(null)}
+                    onUpdated={loadAccountsOverview}
                 />
             )}
 
@@ -502,7 +528,9 @@ export function AccountsPage() {
                 <DeleteAccountModal
                     accountName={accountToDelete.name}
                     isDeleting={isDeleting}
-                    onClose={() => setAccountToDelete(null)}
+                    onClose={() =>
+                        setAccountToDelete(null)
+                    }
                     onConfirm={handleConfirmDelete}
                 />
             )}

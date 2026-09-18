@@ -112,3 +112,25 @@ export async function getAccountDetailOverview(
 
     return response.json()
 }
+
+export type UpdateAccountRequest = {
+    name: string
+    type: number
+    color: string
+}
+
+export async function updateAccount(
+    id: number,
+    request: UpdateAccountRequest,
+): Promise<AccountResponse> {
+    const response = await apiClient(`/Accounts/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(request),
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to update account.")
+    }
+
+    return response.json()
+}

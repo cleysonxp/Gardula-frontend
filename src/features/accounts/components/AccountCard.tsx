@@ -1,5 +1,4 @@
 import { useState } from "react"
-
 import { MoreVertical, Wallet, ArrowDown, ArrowUp } from "lucide-react"
 
 import type { Account } from "@/features/accounts/types/account"
@@ -7,12 +6,14 @@ import type { Account } from "@/features/accounts/types/account"
 type AccountCardProps = {
     account: Account
     onDetails: (account: Account) => void
+    onEdit: (account: Account) => void
     onDelete: (account: Account) => void
 }
 
 export function AccountCard({
     account,
     onDetails,
+    onEdit,
     onDelete,
 }: AccountCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -38,6 +39,14 @@ export function AccountCard({
         event.stopPropagation()
         setIsMenuOpen(false)
         onDetails(account)
+    }
+
+    function handleEdit(
+        event: React.MouseEvent<HTMLButtonElement>,
+    ) {
+        event.stopPropagation()
+        setIsMenuOpen(false)
+        onEdit(account)
     }
 
     function handleDelete(
@@ -67,7 +76,10 @@ export function AccountCard({
                 <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${account.color}`}>
                         {account.icon === "wallet" ? (
-                            <Wallet size={21} className="text-white" />
+                            <Wallet
+                                size={21}
+                                className="text-white"
+                            />
                         ) : (
                             <span className="text-base font-bold text-white">
                                 {account.initial}
@@ -113,6 +125,14 @@ export function AccountCard({
 
                             <button
                                 type="button"
+                                onClick={handleEdit}
+                                className="flex w-full px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                            >
+                                Editar
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={handleDelete}
                                 className="flex w-full px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50"
                             >
@@ -141,7 +161,10 @@ export function AccountCard({
                 <div className="grid grid-cols-2">
                     <div className="flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
-                            <ArrowDown size={14} className="text-emerald-600" />
+                            <ArrowDown
+                                size={14}
+                                className="text-emerald-600"
+                            />
                         </div>
 
                         <div className="min-w-0">
@@ -157,7 +180,10 @@ export function AccountCard({
 
                     <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50">
-                            <ArrowUp size={14} className="text-red-500" />
+                            <ArrowUp
+                                size={14}
+                                className="text-red-500"
+                            />
                         </div>
 
                         <div className="min-w-0">

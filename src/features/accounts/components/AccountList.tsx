@@ -2,7 +2,6 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react"
-
 import {
     useEffect,
     useRef,
@@ -10,18 +9,19 @@ import {
 } from "react"
 
 import { AccountCard } from "@/features/accounts/components/AccountCard"
-
 import type { Account } from "@/features/accounts/types/account"
 
 type AccountListProps = {
     accounts: Account[]
     onDetails: (account: Account) => void
+    onEdit: (account: Account) => void
     onDelete: (account: Account) => void
 }
 
 export function AccountList({
     accounts,
     onDetails,
+    onEdit,
     onDelete,
 }: AccountListProps) {
     const scrollContainerRef =
@@ -191,6 +191,7 @@ export function AccountList({
                                 <AccountCard
                                     account={account}
                                     onDetails={onDetails}
+                                    onEdit={onEdit}
                                     onDelete={onDelete}
                                 />
                             </div>
@@ -204,6 +205,7 @@ export function AccountList({
                             key={account.id}
                             account={account}
                             onDetails={onDetails}
+                            onEdit={onEdit}
                             onDelete={onDelete}
                         />
                     ))}
