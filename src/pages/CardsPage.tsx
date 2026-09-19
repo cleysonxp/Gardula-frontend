@@ -6,6 +6,7 @@ import { CardsOverview } from "../features/cards/components/CardsOverview"
 import { CardsSummary } from "../features/cards/components/CardsSummary"
 import { CardsTable } from "../features/cards/components/CardsTable"
 import { CreateCardModal } from "../features/cards/components/CreateCardModal"
+import { EditCardModal } from "../features/cards/components/EditCardModal"
 import { InvoiceDetails } from "../features/cards/components/InvoiceDetails"
 
 import { getAccounts } from "../features/accounts/services/accountService"
@@ -34,7 +35,6 @@ type CardsData = {
 
 export function CardsPage() {
     const [cards, setCards] = useState<Card[]>([])
-
     const [overview, setOverview] =
         useState<CardOverviewResponse | null>(null)
 
@@ -52,6 +52,9 @@ export function CardsPage() {
 
     const [isCreateModalOpen, setIsCreateModalOpen] =
         useState(false)
+
+    const [cardToEdit, setCardToEdit] =
+        useState<Card | null>(null)
 
     const [isLoading, setIsLoading] =
         useState(true)
@@ -131,9 +134,9 @@ export function CardsPage() {
     const selectedInvoiceCard =
         selectedInvoice
             ? cards.find(
-                  (card) =>
-                      card.id === selectedInvoice.cardId,
-              ) ?? null
+                (card) =>
+                    card.id === selectedInvoice.cardId,
+            ) ?? null
             : null
 
     const handleCardSelect = (cardId: number) => {
@@ -145,16 +148,37 @@ export function CardsPage() {
     }
 
     const handleEditCard = (card: Card) => {
-        console.log("Editar cartão:", card)
+        setCardToEdit(card)
+    }
+
+    const handleCloseEditModal = () => {
+        setCardToEdit(null)
+    }
+
+    const handleCardUpdated = async () => {
+        try {
+            setError(null)
+
+            const data = await fetchCardsData()
+
+            setCards(data.cards)
+            setOverview(data.overview)
+            setInvoices(data.invoices)
+        } catch (error) {
+            console.error(
+                "Erro ao atualizar cartões:",
+                error,
+            )
+
+            setError(
+                "Não foi possível atualizar os cartões.",
+            )
+        }
     }
 
     const handleDeactivateCard = (card: Card) => {
-        console.log("Desativar cartão:", card)
-    }
-
-    const handleViewTransactions = (card: Card) => {
         console.log(
-            "Ver transações do cartão:",
+            "Desativar cartão:",
             card,
         )
     }
@@ -279,12 +303,7 @@ export function CardsPage() {
                         card={selectedCard}
                         onBack={handleBack}
                         onEdit={handleEditCard}
-                        onDeactivate={
-                            handleDeactivateCard
-                        }
-                        onViewTransactions={
-                            handleViewTransactions
-                        }
+                        onDeactivate={handleDeactivateCard}
                     />
                 )}
             </div>
@@ -312,6 +331,18 @@ export function CardsPage() {
                     }
                     onCreated={
                         handleCardCreated
+                    }
+                />
+            )}
+
+            {cardToEdit && (
+                <EditCardModal
+                    card={cardToEdit}
+                    onClose={
+                        handleCloseEditModal
+                    }
+                    onUpdated={
+                        handleCardUpdated
                     }
                 />
             )}

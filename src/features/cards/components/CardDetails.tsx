@@ -2,7 +2,6 @@ import type { Card } from "../types/card.types"
 
 import { CardActions } from "./CardActions"
 import { CardDetailsHeader } from "./CardDetailsHeader"
-import { CardExpenses } from "./CardExpenses"
 import { CardInfoGrid } from "./CardInfoGrid"
 import { CardLimit } from "./CardLimit"
 import { CardLinkedAccount } from "./CardLinkedAccount"
@@ -12,7 +11,6 @@ type CardDetailsProps = {
     onBack?: () => void
     onEdit?: (card: Card) => void
     onDeactivate?: (card: Card) => void
-    onViewTransactions?: (card: Card) => void
 }
 
 export function CardDetails({
@@ -20,11 +18,10 @@ export function CardDetails({
     onBack,
     onEdit,
     onDeactivate,
-    onViewTransactions,
 }: CardDetailsProps) {
     return (
-        <aside className="hidden w-[400px] shrink-0 border-l border-slate-200 bg-white xl:block">
-            <div className="h-full overflow-y-auto px-6 py-7">
+        <aside className="sticky top-0 hidden h-screen w-[400px] shrink-0 self-start border-l border-slate-200 bg-white xl:flex xl:flex-col">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-7">
                 <CardDetailsHeader
                     card={card}
                     onBack={onBack}
@@ -35,14 +32,9 @@ export function CardDetails({
                 <CardInfoGrid card={card} />
 
                 <CardLinkedAccount card={card} />
+            </div>
 
-                <CardExpenses
-                    card={card}
-                    onViewTransactions={
-                        onViewTransactions
-                    }
-                />
-
+            <div className="shrink-0 border-t border-slate-200 px-6 py-5">
                 <CardActions
                     card={card}
                     onEdit={onEdit}

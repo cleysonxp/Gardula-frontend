@@ -1,13 +1,14 @@
 import { useState } from "react"
 import { Check, X } from "lucide-react"
 
-import type { CardResponse } from "@/features/cards/types/card.types"
+import type { Card } from "@/features/cards/types/card.types"
+
 import {
     updateCard,
 } from "@/features/cards/services/cardService"
 
 type EditCardModalProps = {
-    card: CardResponse
+    card: Card
     onClose: () => void
     onUpdated?: () => Promise<void>
 }
@@ -82,37 +83,66 @@ function getColorValue(color: string) {
     return colorData?.value ?? "violet"
 }
 
+function getBrandValue(
+    brand: Card["brand"],
+) {
+    switch (brand) {
+        case "Visa":
+            return 1
+        case "Mastercard":
+            return 2
+        default:
+            return 1
+    }
+}
+
 export function EditCardModal({
     card,
     onClose,
     onUpdated,
 }: EditCardModalProps) {
-    const [name, setName] = useState(card.name)
-    const [creditLimit, setCreditLimit] = useState(
-        new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        }).format(card.creditLimit),
-    )
-    const [closingDay, setClosingDay] = useState(
-        String(card.closingDay),
-    )
-    const [dueDay, setDueDay] = useState(
-        String(card.dueDay),
-    )
-    const [brand, setBrand] = useState(
-        String(card.brand),
-    )
-    const [selectedColor, setSelectedColor] = useState(
-        getColorValue(card.color),
-    )
+    const [name, setName] =
+        useState(card.name)
 
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [creditLimit, setCreditLimit] =
+        useState(
+            new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+            }).format(card.limit),
+        )
 
-    const selectedColorData = cardColors.find(
-        (color) => color.value === selectedColor,
-    )
+    const [closingDay, setClosingDay] =
+        useState(
+            String(card.closingDay),
+        )
+
+    const [dueDay, setDueDay] =
+        useState(
+            String(card.dueDay),
+        )
+
+    const [brand, setBrand] =
+        useState(
+            String(getBrandValue(card.brand)),
+        )
+
+    const [selectedColor, setSelectedColor] =
+        useState(
+            getColorValue(card.color),
+        )
+
+    const [isSubmitting, setIsSubmitting] =
+        useState(false)
+
+    const [error, setError] =
+        useState<string | null>(null)
+
+    const selectedColorData =
+        cardColors.find(
+            (color) =>
+                color.value === selectedColor,
+        )
 
     function handleCreditLimitChange(
         event: React.ChangeEvent<HTMLInputElement>,
@@ -126,23 +156,31 @@ export function EditCardModal({
             return
         }
 
-        const numericValue = Number(value) / 100
+        const numericValue =
+            Number(value) / 100
 
-        const formattedValue = new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        }).format(numericValue)
+        const formattedValue =
+            new Intl.NumberFormat(
+                "pt-BR",
+                {
+                    style: "currency",
+                    currency: "BRL",
+                },
+            ).format(numericValue)
 
         setCreditLimit(formattedValue)
     }
 
     function handleDayChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        setter: React.Dispatch<React.SetStateAction<string>>,
+        setter: React.Dispatch<
+            React.SetStateAction<string>
+        >,
     ) {
-        const value = event.target.value
-            .replace(/\D/g, "")
-            .slice(0, 2)
+        const value =
+            event.target.value
+                .replace(/\D/g, "")
+                .slice(0, 2)
 
         setter(value)
     }
@@ -153,32 +191,45 @@ export function EditCardModal({
         event.preventDefault()
 
         if (!name.trim()) {
-            setError("Informe o nome do cartão.")
+            setError(
+                "Informe o nome do cartão.",
+            )
             return
         }
 
         if (!creditLimit) {
-            setError("Informe o limite de crédito.")
+            setError(
+                "Informe o limite de crédito.",
+            )
             return
         }
 
         if (!closingDay) {
-            setError("Informe o dia de fechamento.")
+            setError(
+                "Informe o dia de fechamento.",
+            )
             return
         }
 
         if (!dueDay) {
-            setError("Informe o dia de vencimento.")
+            setError(
+                "Informe o dia de vencimento.",
+            )
             return
         }
 
         if (!brand) {
-            setError("Selecione a bandeira do cartão.")
+            setError(
+                "Selecione a bandeira do cartão.",
+            )
             return
         }
 
-        const numericClosingDay = Number(closingDay)
-        const numericDueDay = Number(dueDay)
+        const numericClosingDay =
+            Number(closingDay)
+
+        const numericDueDay =
+            Number(dueDay)
 
         if (
             numericClosingDay < 1 ||
@@ -204,23 +255,30 @@ export function EditCardModal({
             setIsSubmitting(true)
             setError(null)
 
-            const numericCreditLimit = Number(
-                creditLimit
-                    .replace(/\s/g, "")
-                    .replace("R$", "")
-                    .replace(/\./g, "")
-                    .replace(",", ".")
-                    .trim(),
-            )
+            const numericCreditLimit =
+                Number(
+                    creditLimit
+                        .replace(/\s/g, "")
+                        .replace("R$", "")
+                        .replace(/\./g, "")
+                        .replace(",", ".")
+                        .trim(),
+                )
 
-            await updateCard(card.id, {
-                name: name.trim(),
-                creditLimit: numericCreditLimit,
-                closingDay: numericClosingDay,
-                dueDay: numericDueDay,
-                brand: Number(brand),
-                color: selectedColor,
-            })
+            await updateCard(
+                card.id,
+                {
+                    name: name.trim(),
+                    creditLimit:
+                        numericCreditLimit,
+                    closingDay:
+                        numericClosingDay,
+                    dueDay:
+                        numericDueDay,
+                    brand: Number(brand),
+                    color: selectedColor,
+                },
+            )
 
             if (onUpdated) {
                 await onUpdated()
@@ -245,7 +303,10 @@ export function EditCardModal({
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
             onMouseDown={(event) => {
-                if (event.target === event.currentTarget) {
+                if (
+                    event.target ===
+                    event.currentTarget
+                ) {
                     onClose()
                 }
             }}
@@ -289,7 +350,9 @@ export function EditCardModal({
                             type="text"
                             value={name}
                             onChange={(event) =>
-                                setName(event.target.value)
+                                setName(
+                                    event.target.value,
+                                )
                             }
                             placeholder="Ex.: Nubank"
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
@@ -309,7 +372,9 @@ export function EditCardModal({
                             type="text"
                             inputMode="numeric"
                             value={creditLimit}
-                            onChange={handleCreditLimitChange}
+                            onChange={
+                                handleCreditLimitChange
+                            }
                             placeholder="R$ 0,00"
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                         />
@@ -379,22 +444,33 @@ export function EditCardModal({
                             id="edit-card-brand"
                             value={brand}
                             onChange={(event) =>
-                                setBrand(event.target.value)
+                                setBrand(
+                                    event.target.value,
+                                )
                             }
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                         >
-                            <option value="" disabled>
+                            <option
+                                value=""
+                                disabled
+                            >
                                 Selecione a bandeira
                             </option>
 
-                            {cardBrands.map((item) => (
-                                <option
-                                    key={item.value}
-                                    value={item.value}
-                                >
-                                    {item.label}
-                                </option>
-                            ))}
+                            {cardBrands.map(
+                                (item) => (
+                                    <option
+                                        key={
+                                            item.value
+                                        }
+                                        value={
+                                            item.value
+                                        }
+                                    >
+                                        {item.label}
+                                    </option>
+                                ),
+                            )}
                         </select>
                     </div>
 
@@ -404,32 +480,41 @@ export function EditCardModal({
                         </p>
 
                         <div className="flex flex-wrap gap-3">
-                            {cardColors.map((color) => {
-                                const isSelected =
-                                    selectedColor === color.value
+                            {cardColors.map(
+                                (color) => {
+                                    const isSelected =
+                                        selectedColor ===
+                                        color.value
 
-                                return (
-                                    <button
-                                        key={color.value}
-                                        type="button"
-                                        onClick={() =>
-                                            setSelectedColor(
-                                                color.value,
-                                            )
-                                        }
-                                        title={color.name}
-                                        aria-label={`Selecionar cor ${color.name}`}
-                                        className={`relative flex h-9 w-9 items-center justify-center rounded-full ${color.className} transition hover:scale-105 ${isSelected ? "ring-2 ring-slate-950 ring-offset-2" : ""}`}
-                                    >
-                                        {isSelected && (
-                                            <Check
-                                                size={17}
-                                                className="text-white"
-                                            />
-                                        )}
-                                    </button>
-                                )
-                            })}
+                                    return (
+                                        <button
+                                            key={
+                                                color.value
+                                            }
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedColor(
+                                                    color.value,
+                                                )
+                                            }
+                                            title={
+                                                color.name
+                                            }
+                                            aria-label={`Selecionar cor ${color.name}`}
+                                            className={`relative flex h-9 w-9 items-center justify-center rounded-full ${color.className} transition hover:scale-105 ${isSelected ? "ring-2 ring-slate-950 ring-offset-2" : ""}`}
+                                        >
+                                            {isSelected && (
+                                                <Check
+                                                    size={
+                                                        17
+                                                    }
+                                                    className="text-white"
+                                                />
+                                            )}
+                                        </button>
+                                    )
+                                },
+                            )}
                         </div>
 
                         <div className="mt-4 flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
@@ -440,7 +525,9 @@ export function EditCardModal({
                             <span className="text-xs text-slate-500">
                                 Cor selecionada:{" "}
                                 <span className="font-medium text-slate-700">
-                                    {selectedColorData?.name}
+                                    {
+                                        selectedColorData?.name
+                                    }
                                 </span>
                             </span>
                         </div>
@@ -458,7 +545,9 @@ export function EditCardModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Cancelar
@@ -466,7 +555,9 @@ export function EditCardModal({
 
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             className="rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isSubmitting
