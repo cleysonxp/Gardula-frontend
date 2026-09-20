@@ -16,6 +16,10 @@ function getAvailableLimit(card: Card) {
 }
 
 function getUsagePercentage(card: Card) {
+    if (card.limit <= 0) {
+        return 0
+    }
+
     return (card.usedLimit / card.limit) * 100
 }
 
@@ -28,10 +32,6 @@ export function CardInfo({ card }: CardInfoProps) {
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-semibold text-slate-950">
-                        {card.name}
-                    </p>
-
-                    <p className="mt-0.5 text-xs text-slate-500">
                         {card.account}
                     </p>
                 </div>
@@ -56,7 +56,10 @@ export function CardInfo({ card }: CardInfoProps) {
                     <div
                         className="h-full rounded-full bg-violet-600"
                         style={{
-                            width: `${usagePercentage}%`,
+                            width: `${Math.min(
+                                usagePercentage,
+                                100,
+                            )}%`,
                         }}
                     />
                 </div>

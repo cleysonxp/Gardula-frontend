@@ -31,7 +31,7 @@ export function CardVisual({ card }: CardVisualProps) {
             <div className="relative flex items-start justify-between">
                 <div>
                     <p className="text-lg font-bold">
-                        {card.bank}
+                        {card.name}
                     </p>
 
                     <p className="mt-0.5 text-xs text-white/70">
