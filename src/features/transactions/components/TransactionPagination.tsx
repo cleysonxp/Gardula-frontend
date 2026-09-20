@@ -1,4 +1,7 @@
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import {
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-react"
 
 type TransactionPaginationProps = {
     currentPage: number
@@ -6,6 +9,7 @@ type TransactionPaginationProps = {
     totalItems: number
     pageSize: number
     onPageChange: (page: number) => void
+    itemLabel?: string
 }
 
 export function TransactionPagination({
@@ -14,13 +18,19 @@ export function TransactionPagination({
     totalItems,
     pageSize,
     onPageChange,
+    itemLabel = "transações",
 }: TransactionPaginationProps) {
     if (totalItems === 0) {
         return null
     }
 
-    const firstItem = (currentPage - 1) * pageSize + 1
-    const lastItem = Math.min(currentPage * pageSize, totalItems)
+    const firstItem =
+        (currentPage - 1) * pageSize + 1
+
+    const lastItem = Math.min(
+        currentPage * pageSize,
+        totalItems,
+    )
 
     const getPages = () => {
         if (totalPages <= 5) {
@@ -31,11 +41,26 @@ export function TransactionPagination({
         }
 
         if (currentPage <= 3) {
-            return [1, 2, 3, "...", totalPages]
+            return [
+                1,
+                2,
+                3,
+                "...",
+                totalPages,
+            ]
         }
 
-        if (currentPage >= totalPages - 2) {
-            return [1, "...", totalPages - 2, totalPages - 1, totalPages]
+        if (
+            currentPage >=
+            totalPages - 2
+        ) {
+            return [
+                1,
+                "...",
+                totalPages - 2,
+                totalPages - 1,
+                totalPages,
+            ]
         }
 
         return [
@@ -54,48 +79,71 @@ export function TransactionPagination({
     return (
         <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-slate-500">
-                Mostrando {firstItem}–{lastItem} de {totalItems} transações
+                Mostrando {firstItem}–{lastItem} de{" "}
+                {totalItems} {itemLabel}
             </span>
 
             <div className="flex items-center gap-1">
                 <button
                     type="button"
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
+                    onClick={() =>
+                        onPageChange(
+                            currentPage - 1,
+                        )
+                    }
+                    disabled={
+                        currentPage === 1
+                    }
                     className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     <ChevronLeft size={16} />
                     Anterior
                 </button>
 
-                {pages.map((page, index) => {
-                    if (page === "...") {
-                        return (
-                            <span
-                                key={`ellipsis-${index}`}
-                                className="px-2 py-2 text-sm text-slate-400"
-                            >
-                                ...
-                            </span>
-                        )
-                    }
+                {pages.map(
+                    (page, index) => {
+                        if (
+                            page ===
+                            "..."
+                        ) {
+                            return (
+                                <span
+                                    key={`ellipsis-${index}`}
+                                    className="px-2 py-2 text-sm text-slate-400"
+                                >
+                                    ...
+                                </span>
+                            )
+                        }
 
-                    return (
-                        <button
-                            key={page}
-                            type="button"
-                            onClick={() => onPageChange(page as number)}
-                            className={`min-w-9 rounded-lg px-3 py-2 text-sm font-medium transition ${page === currentPage ? "bg-violet-600 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
-                        >
-                            {page}
-                        </button>
-                    )
-                })}
+                        return (
+                            <button
+                                key={page}
+                                type="button"
+                                onClick={() =>
+                                    onPageChange(
+                                        page as number,
+                                    )
+                                }
+                                className={`min-w-9 rounded-lg px-3 py-2 text-sm font-medium transition ${page === currentPage ? "bg-violet-600 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                            >
+                                {page}
+                            </button>
+                        )
+                    },
+                )}
 
                 <button
                     type="button"
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                        onPageChange(
+                            currentPage + 1,
+                        )
+                    }
+                    disabled={
+                        currentPage ===
+                        totalPages
+                    }
                     className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Próxima
