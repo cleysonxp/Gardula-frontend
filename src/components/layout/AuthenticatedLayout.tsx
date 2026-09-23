@@ -1,7 +1,6 @@
 import {
     BarChart3,
     CreditCard,
-    Goal,
     Home,
     LogOut,
     Repeat,
@@ -9,7 +8,8 @@ import {
     ArrowLeftRight,
     ChevronRight,
     WalletCards,
-    PiggyBank,
+    // PiggyBank,
+    Target,
 } from "lucide-react"
 import { Link, Outlet, useLocation } from "react-router"
 import { useContext } from "react"
@@ -56,14 +56,9 @@ const menuSections = [
         title: "Planejamento",
         items: [
             {
-                label: "Objetivos",
-                icon: Goal,
-                path: "/goals",
-            },
-            {
-                label: "Orçamento",
-                icon: PiggyBank,
-                path: "/budget",
+                label: "Planejamento",
+                icon: Target,
+                path: "/planning",
             },
         ],
     },

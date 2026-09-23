@@ -9,6 +9,7 @@ import { TransactionsPage } from "@/pages/TransactionsPage"
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute"
 import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
 import { RecurringPage } from "@/pages/RecurringPage";
+import { PlanningPage } from "@/pages/PlanningPage";
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
           {
             path: "/recurring",
             element: <RecurringPage />,
+          },
+          {
+            path: "/planning",
+            element: <PlanningPage />,
           },
         ],
       },
