@@ -145,25 +145,49 @@ export function PlanningPage() {
     if (!overview) {
         return (
             <>
-                <div className="flex min-h-screen items-center justify-center bg-slate-50">
-                    <div className="text-center">
-                        <h2 className="text-lg font-bold text-slate-950">
-                            Nenhum orçamento definido
-                        </h2>
+                <div className="min-h-screen bg-[#F7F7FC]">
+                    <div className="flex min-h-screen">
+                        <section className="min-w-0 flex-1 px-6 py-6 lg:px-7">
+                            <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+                                        Planejamento financeiro
+                                    </h1>
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            Defina seu orçamento para começar a planejar este mês.
-                        </p>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Organize seu presente e construa o seu futuro.
+                                    </p>
+                                </div>
 
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowBudgetForm(true)
-                            }
-                            className="mt-5 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
-                        >
-                            Definir orçamento
-                        </button>
+                                <MonthSelector
+                                    year={year}
+                                    month={month}
+                                    onChange={handlePeriodChange}
+                                />
+                            </header>
+
+                            <div className="flex min-h-[500px] items-center justify-center">
+                                <div className="text-center">
+                                    <h2 className="text-lg font-bold text-slate-950">
+                                        Nenhum orçamento definido
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Defina seu orçamento para começar a planejar este mês.
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowBudgetForm(true)
+                                        }
+                                        className="mt-5 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                    >
+                                        Definir orçamento
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
@@ -171,6 +195,8 @@ export function PlanningPage() {
                     <BudgetForm
                         year={year}
                         month={month}
+                        isInherited={false}
+                        currentAmount={0}
                         onClose={() =>
                             setShowBudgetForm(false)
                         }
@@ -207,8 +233,13 @@ export function PlanningPage() {
                         budget={overview.budget.amount}
                         spent={overview.budget.spent}
                         available={overview.budget.available}
-                        usagePercentage={overview.budget.percentageUsed}
+                        usagePercentage={
+                            overview.budget.percentageUsed
+                        }
                         formatCurrency={formatCurrency}
+                        onDefineBudget={() =>
+                            setShowBudgetForm(true)
+                        }
                     />
 
                     <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
@@ -243,6 +274,23 @@ export function PlanningPage() {
                     />
                 </section>
             </div>
+
+            {showBudgetForm && (
+                <BudgetForm
+                    year={year}
+                    month={month}
+                    isInherited={
+                        overview.budget.isInherited
+                    }
+                    currentAmount={
+                        overview.budget.amount
+                    }
+                    onClose={() =>
+                        setShowBudgetForm(false)
+                    }
+                    onSuccess={handleBudgetSuccess}
+                />
+            )}
         </div>
     )
 }

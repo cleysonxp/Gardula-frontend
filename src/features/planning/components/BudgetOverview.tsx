@@ -6,6 +6,7 @@ interface BudgetOverviewProps {
     available: number
     usagePercentage: number
     formatCurrency: (value: number) => string
+    onDefineBudget: () => void
 }
 
 export function BudgetOverview({
@@ -14,6 +15,7 @@ export function BudgetOverview({
     available,
     usagePercentage,
     formatCurrency,
+    onDefineBudget,
 }: BudgetOverviewProps) {
     return (
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -35,7 +37,11 @@ export function BudgetOverview({
                             </div>
                         </div>
 
-                        <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-white px-4 py-2.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50">
+                        <button
+                            type="button"
+                            onClick={onDefineBudget}
+                            className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-white px-4 py-2.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50"
+                        >
                             <Target size={16} />
                             Definir orçamento
                         </button>

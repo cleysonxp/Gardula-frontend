@@ -44,6 +44,26 @@ export async function createMonthlyBudget(
     }
 }
 
+export async function updateMonthlyBudget(
+    year: number,
+    month: number,
+    request: {
+        amount: number
+    },
+): Promise<void> {
+    const response = await apiClient(
+        `/Planning/budget?year=${year}&month=${month}`,
+        {
+            method: "PUT",
+            body: JSON.stringify(request),
+        },
+    )
+
+    if (!response.ok) {
+        throw new Error("Failed to update monthly budget.")
+    }
+}
+
 export async function getFinancialGoals(): Promise<
     FinancialGoalResponse[]
 > {

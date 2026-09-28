@@ -1,11 +1,16 @@
 import { X } from "lucide-react"
 import { useState } from "react"
 
-import { createMonthlyBudget } from "../services/planningService"
+import {
+    createMonthlyBudget,
+    updateMonthlyBudget,
+} from "../services/planningService"
 
 interface BudgetFormProps {
     year: number
     month: number
+    isInherited: boolean
+    currentAmount: number
     onClose: () => void
     onSuccess: () => void
 }
@@ -13,12 +18,23 @@ interface BudgetFormProps {
 export function BudgetForm({
     year,
     month,
+    isInherited,
+    currentAmount,
     onClose,
     onSuccess,
 }: BudgetFormProps) {
-    const [amount, setAmount] = useState("")
-    const [isSaving, setIsSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [amount, setAmount] =
+        useState(
+            currentAmount > 0
+                ? currentAmount.toString().replace(".", ",")
+                : "",
+        )
+
+    const [isSaving, setIsSaving] =
+        useState(false)
+
+    const [error, setError] =
+        useState<string | null>(null)
 
     const handleSubmit = async (
         event: React.FormEvent<HTMLFormElement>,
@@ -40,23 +56,33 @@ export function BudgetForm({
             setError(null)
             setIsSaving(true)
 
-            await createMonthlyBudget(
-                year,
-                month,
-                {
-                    amount: numericAmount,
-                },
-            )
+            const request = {
+                amount: numericAmount,
+            }
+
+            if (isInherited) {
+                await createMonthlyBudget(
+                    year,
+                    month,
+                    request,
+                )
+            } else {
+                await updateMonthlyBudget(
+                    year,
+                    month,
+                    request,
+                )
+            }
 
             onSuccess()
         } catch (error) {
             console.error(
-                "Erro ao criar orçamento:",
+                "Erro ao salvar orçamento:",
                 error,
             )
 
             setError(
-                "Não foi possível definir o orçamento.",
+                "Não foi possível salvar o orçamento.",
             )
         } finally {
             setIsSaving(false)
@@ -116,6 +142,16 @@ export function BudgetForm({
                             />
                         </div>
                     </div>
+
+                    {isInherited && (
+                        <p className="mt-3 text-xs text-slate-500">
+                            O valor atual de{" "}
+                            <strong>
+                                R$ {currentAmount.toFixed(2).replace(".", ",")}
+                            </strong>{" "}
+                            está sendo herdado de um mês anterior.
+                        </p>
+                    )}
 
                     {error && (
                         <p className="mt-3 text-sm text-red-500">

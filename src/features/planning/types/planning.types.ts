@@ -13,6 +13,7 @@ export interface BudgetOverview {
     spent: number
     available: number
     percentageUsed: number
+    isInherited: boolean
 }
 
 export interface CategorySpending {
