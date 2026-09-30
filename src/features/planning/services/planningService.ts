@@ -75,3 +75,25 @@ export async function getFinancialGoals(): Promise<
 
     return response.json()
 }
+
+export async function createFinancialGoal(
+    request: {
+        name: string
+        description: string
+        targetAmount: number
+        targetDate: string
+        icon: string
+    },
+): Promise<void> {
+    const response = await apiClient(
+        "/Planning/goals",
+        {
+            method: "POST",
+            body: JSON.stringify(request),
+        },
+    )
+
+    if (!response.ok) {
+        throw new Error("Failed to create financial goal.")
+    }
+}

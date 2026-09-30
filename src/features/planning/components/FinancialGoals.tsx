@@ -7,11 +7,13 @@ import type { FinancialGoal } from "@/features/planning/types/planning.types"
 interface FinancialGoalsProps {
     goals: FinancialGoal[]
     formatCurrency: (value: number) => string
+    onCreateGoal: () => void
 }
 
 export function FinancialGoals({
     goals,
     formatCurrency,
+    onCreateGoal,
 }: FinancialGoalsProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -25,6 +27,7 @@ export function FinancialGoals({
                         <h2 className="text-base font-bold text-slate-950">
                             Seus objetivos
                         </h2>
+
                         <p className="text-sm text-slate-500">
                             Acompanhe suas metas e conquiste seus sonhos.
                         </p>
@@ -32,12 +35,19 @@ export function FinancialGoals({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+                    <button
+                        type="button"
+                        onClick={onCreateGoal}
+                        className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                    >
                         <Plus size={17} />
                         Novo objetivo
                     </button>
 
-                    <button type="button" className="text-sm font-medium text-violet-600 hover:text-violet-700">
+                    <button
+                        type="button"
+                        className="text-sm font-medium text-violet-600 hover:text-violet-700"
+                    >
                         Ver todos
                     </button>
                 </div>

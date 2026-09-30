@@ -6,6 +6,7 @@ import { CategorySpending } from "../features/planning/components/CategorySpendi
 import { FinancialGoals } from "../features/planning/components/FinancialGoals"
 import { MonthSelector } from "../features/planning/components/MonthSelector"
 import { PlanningSummary } from "../features/planning/components/PlanningSummary"
+import { FinancialGoalForm } from "../features/planning/components/FinancialGoalForm"
 
 import {
     mapCategoriesSpending,
@@ -47,6 +48,9 @@ export function PlanningPage() {
         useState<string | null>(null)
 
     const [showBudgetForm, setShowBudgetForm] =
+        useState(false)
+
+    const [showGoalForm, setShowGoalForm] =
         useState(false)
 
     const [year, setYear] =
@@ -119,6 +123,11 @@ export function PlanningPage() {
 
     const handleBudgetSuccess = async () => {
         setShowBudgetForm(false)
+        await loadPlanningData()
+    }
+
+    const handleGoalSuccess = async () => {
+        setShowGoalForm(false)
         await loadPlanningData()
     }
 
@@ -271,6 +280,9 @@ export function PlanningPage() {
                     <FinancialGoals
                         goals={goals}
                         formatCurrency={formatCurrency}
+                        onCreateGoal={() =>
+                            setShowGoalForm(true)
+                        }
                     />
                 </section>
             </div>
@@ -289,6 +301,15 @@ export function PlanningPage() {
                         setShowBudgetForm(false)
                     }
                     onSuccess={handleBudgetSuccess}
+                />
+            )}
+
+            {showGoalForm && (
+                <FinancialGoalForm
+                    onClose={() =>
+                        setShowGoalForm(false)
+                    }
+                    onSuccess={handleGoalSuccess}
                 />
             )}
         </div>
