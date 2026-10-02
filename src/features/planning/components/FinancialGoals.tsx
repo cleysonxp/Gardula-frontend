@@ -8,12 +8,14 @@ interface FinancialGoalsProps {
     goals: FinancialGoal[]
     formatCurrency: (value: number) => string
     onCreateGoal: () => void
+    onAddAmount: (goalId: number) => void
 }
 
 export function FinancialGoals({
     goals,
     formatCurrency,
     onCreateGoal,
+    onAddAmount,
 }: FinancialGoalsProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -57,6 +59,7 @@ export function FinancialGoals({
                 {goals.map((goal) => (
                     <FinancialGoalCard
                         key={goal.name}
+                        id={goal.id}
                         name={goal.name}
                         description={goal.description}
                         current={goal.current}
@@ -68,6 +71,7 @@ export function FinancialGoals({
                         iconColor={goal.iconColor}
                         progress={goal.progress}
                         formatCurrency={formatCurrency}
+                        onAddAmount={onAddAmount}
                     />
                 ))}
             </div>

@@ -97,6 +97,7 @@ export function mapFinancialGoal(
     const iconClasses = getGoalIcon(goal.icon)
 
     return {
+        id: goal.id,
         name: goal.name,
         description: goal.description,
         current: goal.currentAmount,

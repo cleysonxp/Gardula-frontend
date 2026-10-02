@@ -1,7 +1,8 @@
-import { CalendarDays, MoreVertical } from "lucide-react"
+import { CalendarDays, MoreVertical, Plus } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 interface FinancialGoalCardProps {
+    id: number
     name: string
     description: string
     current: number
@@ -13,9 +14,11 @@ interface FinancialGoalCardProps {
     iconColor: string
     progress: string
     formatCurrency: (value: number) => string
+    onAddAmount: (goalId: number) => void
 }
 
 export function FinancialGoalCard({
+    id,
     name,
     description,
     current,
@@ -27,6 +30,7 @@ export function FinancialGoalCard({
     iconColor,
     progress,
     formatCurrency,
+    onAddAmount,
 }: FinancialGoalCardProps) {
     return (
         <article className="rounded-xl border border-slate-200 p-4 transition hover:border-slate-300 hover:shadow-sm">
@@ -35,7 +39,11 @@ export function FinancialGoalCard({
                     <Icon size={19} />
                 </div>
 
-                <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-600" aria-label={`Mais opções para ${name}`}>
+                <button
+                    type="button"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                    aria-label={`Mais opções para ${name}`}
+                >
                     <MoreVertical size={17} />
                 </button>
             </div>
@@ -60,7 +68,12 @@ export function FinancialGoalCard({
 
             <div className="mt-2 flex items-center gap-2">
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                    <div className={`h-full rounded-full ${progress}`} style={{ width: `${percentage}%` }} />
+                    <div
+                        className={`h-full rounded-full ${progress}`}
+                        style={{
+                            width: `${percentage}%`,
+                        }}
+                    />
                 </div>
 
                 <span className="text-xs font-medium text-slate-600">
@@ -70,8 +83,20 @@ export function FinancialGoalCard({
 
             <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
                 <CalendarDays size={14} />
+
                 Previsão: {forecast}
             </div>
+
+            <button
+                type="button"
+                onClick={() =>
+                    onAddAmount(id)
+                }
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-600 transition hover:bg-violet-100"
+            >
+                <Plus size={15} />
+                Adicionar valor
+            </button>
         </article>
     )
 }

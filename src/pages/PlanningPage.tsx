@@ -7,6 +7,7 @@ import { FinancialGoals } from "../features/planning/components/FinancialGoals"
 import { MonthSelector } from "../features/planning/components/MonthSelector"
 import { PlanningSummary } from "../features/planning/components/PlanningSummary"
 import { FinancialGoalForm } from "../features/planning/components/FinancialGoalForm"
+import { FinancialGoalAmountForm } from "../features/planning/components/FinancialGoalAmountForm"
 
 import {
     mapCategoriesSpending,
@@ -52,6 +53,12 @@ export function PlanningPage() {
 
     const [showGoalForm, setShowGoalForm] =
         useState(false)
+
+    const [showGoalAmountForm, setShowGoalAmountForm] =
+        useState(false)
+
+    const [selectedGoalId, setSelectedGoalId] =
+        useState<number | null>(null)
 
     const [year, setYear] =
         useState(2026)
@@ -130,6 +137,23 @@ export function PlanningPage() {
         setShowGoalForm(false)
         await loadPlanningData()
     }
+
+    const handleAddGoalAmount = (
+        goalId: number,
+    ) => {
+        setSelectedGoalId(goalId)
+        setShowGoalAmountForm(true)
+    }
+
+    const handleGoalAmountSuccess = async () => {
+        setShowGoalAmountForm(false)
+        setSelectedGoalId(null)
+        await loadPlanningData()
+    }
+
+    const selectedGoal = goals.find(
+        (goal) => goal.id === selectedGoalId,
+    )
 
     if (isLoading) {
         return (
@@ -283,6 +307,7 @@ export function PlanningPage() {
                         onCreateGoal={() =>
                             setShowGoalForm(true)
                         }
+                        onAddAmount={handleAddGoalAmount}
                     />
                 </section>
             </div>
@@ -310,6 +335,20 @@ export function PlanningPage() {
                         setShowGoalForm(false)
                     }
                     onSuccess={handleGoalSuccess}
+                />
+            )}
+
+            {showGoalAmountForm && selectedGoal && (
+                <FinancialGoalAmountForm
+                    goalId={selectedGoal.id}
+                    goalName={selectedGoal.name}
+                    currentAmount={selectedGoal.current}
+                    targetAmount={selectedGoal.target}
+                    onClose={() => {
+                        setShowGoalAmountForm(false)
+                        setSelectedGoalId(null)
+                    }}
+                    onSuccess={handleGoalAmountSuccess}
                 />
             )}
         </div>

@@ -54,6 +54,7 @@ export interface FinancialGoalResponse {
 }
 
 export interface FinancialGoal {
+    id: number
     name: string
     description: string
     current: number
