@@ -15,6 +15,7 @@ interface FinancialGoalCardProps {
     progress: string
     formatCurrency: (value: number) => string
     onAddAmount: (goalId: number) => void
+    onEdit: (goalId: number) => void
 }
 
 export function FinancialGoalCard({
@@ -31,6 +32,7 @@ export function FinancialGoalCard({
     progress,
     formatCurrency,
     onAddAmount,
+    onEdit,
 }: FinancialGoalCardProps) {
     return (
         <article className="rounded-xl border border-slate-200 p-4 transition hover:border-slate-300 hover:shadow-sm">
@@ -41,8 +43,9 @@ export function FinancialGoalCard({
 
                 <button
                     type="button"
+                    onClick={() => onEdit(id)}
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
-                    aria-label={`Mais opções para ${name}`}
+                    aria-label={`Editar ${name}`}
                 >
                     <MoreVertical size={17} />
                 </button>

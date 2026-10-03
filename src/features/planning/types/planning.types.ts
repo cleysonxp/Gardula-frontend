@@ -60,8 +60,10 @@ export interface FinancialGoal {
     current: number
     target: number
     percentage: number
+    targetDate: string
     forecast: string
     icon: LucideIcon
+    iconName: string
     iconBackground: string
     iconColor: string
     progress: string

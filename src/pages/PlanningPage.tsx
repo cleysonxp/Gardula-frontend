@@ -8,6 +8,7 @@ import { MonthSelector } from "../features/planning/components/MonthSelector"
 import { PlanningSummary } from "../features/planning/components/PlanningSummary"
 import { FinancialGoalForm } from "../features/planning/components/FinancialGoalForm"
 import { FinancialGoalAmountForm } from "../features/planning/components/FinancialGoalAmountForm"
+import { FinancialGoalEditForm } from "../features/planning/components/FinancialGoalEditForm"
 
 import {
     mapCategoriesSpending,
@@ -56,6 +57,12 @@ export function PlanningPage() {
 
     const [showGoalAmountForm, setShowGoalAmountForm] =
         useState(false)
+
+    const [showGoalEditForm, setShowGoalEditForm] =
+        useState(false)
+
+    const [selectedGoalEditId, setSelectedGoalEditId] =
+        useState<number | null>(null)
 
     const [selectedGoalId, setSelectedGoalId] =
         useState<number | null>(null)
@@ -145,6 +152,19 @@ export function PlanningPage() {
         setShowGoalAmountForm(true)
     }
 
+    const handleEditGoal = (
+        goalId: number,
+    ) => {
+        setSelectedGoalEditId(goalId)
+        setShowGoalEditForm(true)
+    }
+
+    const handleGoalEditSuccess = async () => {
+        setShowGoalEditForm(false)
+        setSelectedGoalEditId(null)
+        await loadPlanningData()
+    }
+
     const handleGoalAmountSuccess = async () => {
         setShowGoalAmountForm(false)
         setSelectedGoalId(null)
@@ -153,6 +173,10 @@ export function PlanningPage() {
 
     const selectedGoal = goals.find(
         (goal) => goal.id === selectedGoalId,
+    )
+
+    const selectedGoalEdit = goals.find(
+        (goal) => goal.id === selectedGoalEditId,
     )
 
     if (isLoading) {
@@ -308,6 +332,7 @@ export function PlanningPage() {
                             setShowGoalForm(true)
                         }
                         onAddAmount={handleAddGoalAmount}
+                        onEdit={handleEditGoal}
                     />
                 </section>
             </div>
@@ -349,6 +374,30 @@ export function PlanningPage() {
                         setSelectedGoalId(null)
                     }}
                     onSuccess={handleGoalAmountSuccess}
+                />
+            )}
+
+            {showGoalEditForm && selectedGoalEdit && (
+                <FinancialGoalEditForm
+                    goalId={selectedGoalEdit.id}
+                    initialName={selectedGoalEdit.name}
+                    initialDescription={
+                        selectedGoalEdit.description
+                    }
+                    initialTargetAmount={
+                        selectedGoalEdit.target
+                    }
+                    initialTargetDate={
+                        selectedGoalEdit.targetDate
+                    }
+                    initialIcon={
+                        selectedGoalEdit.iconName
+                    }
+                    onClose={() => {
+                        setShowGoalEditForm(false)
+                        setSelectedGoalEditId(null)
+                    }}
+                    onSuccess={handleGoalEditSuccess}
                 />
             )}
         </div>

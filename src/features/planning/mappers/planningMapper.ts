@@ -103,8 +103,10 @@ export function mapFinancialGoal(
         current: goal.currentAmount,
         target: goal.targetAmount,
         percentage: goal.percentage,
+        targetDate: goal.targetDate,
         forecast: formatGoalDate(goal.targetDate),
         icon: iconClasses.icon,
+        iconName: goal.icon,
         iconBackground: iconClasses.iconBackground,
         iconColor: iconClasses.iconColor,
         progress: iconClasses.progress,
@@ -120,7 +122,8 @@ export function mapFinancialGoals(
 export function mapCategorySpending(
     category: CategorySpending,
 ): PlanningCategory {
-    const categoryStyle = getCategoryStyle(category.categoryName)
+    const categoryStyle =
+        getCategoryStyle(category.categoryName)
 
     return {
         name: category.categoryName,
