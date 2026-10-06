@@ -16,6 +16,7 @@ import {
 } from "../features/planning/mappers/planningMapper"
 
 import {
+    deleteFinancialGoal,
     getFinancialGoals,
     getPlanningOverview,
 } from "../features/planning/services/planningService"
@@ -117,6 +118,7 @@ export function PlanningPage() {
     const loadPlanningData = async () => {
         try {
             setIsLoading(true)
+
             await fetchPlanningData()
         } finally {
             setIsLoading(false)
@@ -137,11 +139,13 @@ export function PlanningPage() {
 
     const handleBudgetSuccess = async () => {
         setShowBudgetForm(false)
+
         await loadPlanningData()
     }
 
     const handleGoalSuccess = async () => {
         setShowGoalForm(false)
+
         await loadPlanningData()
     }
 
@@ -159,15 +163,45 @@ export function PlanningPage() {
         setShowGoalEditForm(true)
     }
 
+    const handleDeleteGoal = async (
+        goalId: number,
+    ) => {
+        const confirmed = window.confirm(
+            "Tem certeza que deseja excluir esta meta?",
+        )
+
+        if (!confirmed)
+            return
+
+        try {
+            setError(null)
+
+            await deleteFinancialGoal(goalId)
+
+            await loadPlanningData()
+        } catch (error) {
+            console.error(
+                "Erro ao excluir meta financeira:",
+                error,
+            )
+
+            setError(
+                "Não foi possível excluir a meta.",
+            )
+        }
+    }
+
     const handleGoalEditSuccess = async () => {
         setShowGoalEditForm(false)
         setSelectedGoalEditId(null)
+
         await loadPlanningData()
     }
 
     const handleGoalAmountSuccess = async () => {
         setShowGoalAmountForm(false)
         setSelectedGoalId(null)
+
         await loadPlanningData()
     }
 
@@ -333,6 +367,7 @@ export function PlanningPage() {
                         }
                         onAddAmount={handleAddGoalAmount}
                         onEdit={handleEditGoal}
+                        onDelete={handleDeleteGoal}
                     />
                 </section>
             </div>

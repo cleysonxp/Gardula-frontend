@@ -141,3 +141,20 @@ export async function addFinancialGoalAmount(
         )
     }
 }
+
+export async function deleteFinancialGoal(
+    goalId: number,
+): Promise<void> {
+    const response = await apiClient(
+        `/Planning/goals/${goalId}`,
+        {
+            method: "DELETE",
+        },
+    )
+
+    if (!response.ok) {
+        throw new Error(
+            "Failed to delete financial goal.",
+        )
+    }
+}

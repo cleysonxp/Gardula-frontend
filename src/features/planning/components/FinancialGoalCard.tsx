@@ -1,5 +1,12 @@
-import { CalendarDays, MoreVertical, Plus } from "lucide-react"
+import {
+    CalendarDays,
+    MoreVertical,
+    Pencil,
+    Plus,
+    Trash2,
+} from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useState } from "react"
 
 interface FinancialGoalCardProps {
     id: number
@@ -16,6 +23,7 @@ interface FinancialGoalCardProps {
     formatCurrency: (value: number) => string
     onAddAmount: (goalId: number) => void
     onEdit: (goalId: number) => void
+    onDelete: (goalId: number) => void
 }
 
 export function FinancialGoalCard({
@@ -33,7 +41,10 @@ export function FinancialGoalCard({
     formatCurrency,
     onAddAmount,
     onEdit,
+    onDelete,
 }: FinancialGoalCardProps) {
+    const [showActions, setShowActions] = useState(false)
+
     return (
         <article className="rounded-xl border border-slate-200 p-4 transition hover:border-slate-300 hover:shadow-sm">
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -41,14 +52,46 @@ export function FinancialGoalCard({
                     <Icon size={19} />
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => onEdit(id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
-                    aria-label={`Editar ${name}`}
-                >
-                    <MoreVertical size={17} />
-                </button>
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowActions((current) => !current)
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                        aria-label={`Ações de ${name}`}
+                    >
+                        <MoreVertical size={17} />
+                    </button>
+
+                    {showActions && (
+                        <div className="absolute right-0 top-9 z-10 w-32 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowActions(false)
+                                    onEdit(id)
+                                }}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                            >
+                                <Pencil size={14} />
+                                Editar
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowActions(false)
+                                    onDelete(id)
+                                }}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium text-red-600 transition hover:bg-red-50"
+                            >
+                                <Trash2 size={14} />
+                                Excluir
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <h3 className="text-sm font-bold text-slate-900">

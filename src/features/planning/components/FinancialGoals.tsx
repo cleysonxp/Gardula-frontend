@@ -10,6 +10,7 @@ interface FinancialGoalsProps {
     onCreateGoal: () => void
     onAddAmount: (goalId: number) => void
     onEdit: (goalId: number) => void
+    onDelete: (goalId: number) => void
 }
 
 export function FinancialGoals({
@@ -18,6 +19,7 @@ export function FinancialGoals({
     onCreateGoal,
     onAddAmount,
     onEdit,
+    onDelete,
 }: FinancialGoalsProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -75,6 +77,7 @@ export function FinancialGoals({
                         formatCurrency={formatCurrency}
                         onAddAmount={onAddAmount}
                         onEdit={onEdit}
+                        onDelete={onDelete}
                     />
                 ))}
             </div>
