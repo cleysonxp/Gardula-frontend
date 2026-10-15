@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react"
+import { ArrowDown, ArrowUp, TrendingUp, Wallet } from "lucide-react"
+
 import { CategorySpendingCard } from "../features/home/components/CategorySpendingCard"
 import { CreditCardsCard } from "../features/home/components/CreditCardsCard"
 import { FinancialGoalsCard } from "../features/home/components/FinancialGoalsCard"
@@ -6,14 +9,53 @@ import { HomeHeader } from "../features/home/components/HomeHeader"
 import { MonthlyBudgetCard } from "../features/home/components/MonthlyBudgetCard"
 import { RecentTransactionsCard } from "../features/home/components/RecentTransactionsCard"
 import { SummaryCard } from "../features/home/components/SummaryCard"
-import {
-    ArrowDown,
-    ArrowUp,
-    TrendingUp,
-    Wallet,
-} from "lucide-react"
+import { getHomeOverview } from "../features/home/services/homeService"
+
+import type { HomeOverviewResponse } from "../features/home/types/home.types"
 
 export function HomePage() {
+    const [overview, setOverview] = useState<HomeOverviewResponse | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        async function loadOverview() {
+            try {
+                setIsLoading(true)
+                setError(null)
+
+                const data = await getHomeOverview(
+                    new Date().getFullYear(),
+                    new Date().getMonth() + 1,
+                )
+
+                setOverview(data)
+            } catch {
+                setError("Não foi possível carregar os dados da Home.")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        loadOverview()
+    }, [])
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#F7F7FC] px-6">
+                <p className="text-sm text-slate-500">Carregando dados financeiros...</p>
+            </div>
+        )
+    }
+
+    if (error || !overview) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#F7F7FC] px-6">
+                <p className="text-sm text-rose-600">{error ?? "Nenhum dado disponível."}</p>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-[#F7F7FC] px-6 py-6 lg:px-7">
             <HomeHeader />
