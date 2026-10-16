@@ -1,76 +1,37 @@
-import { ArrowRight, Car, CircleDollarSign, Utensils } from "lucide-react"
+import {
+    ArrowRight,
+    ArrowLeftRight,
+    Car,
+    CircleDollarSign,
+    CreditCard,
+    Utensils,
+    Wallet,
+} from "lucide-react"
 
-interface Transaction {
-    id: number
-    name: string
-    date: string
-    category: string
-    amount: string
-    type: "income" | "expense"
-    icon: React.ElementType
-    iconBackground: string
-    iconColor: string
+import type { TransactionListResponse } from "@/features/home/types/home.types"
+
+interface RecentTransactionsCardProps {
+    transactions: TransactionListResponse[]
 }
 
-const recentTransactions: Transaction[] = [
-    {
-        id: 1,
-        name: "Mercado Municipal",
-        date: "15 de outubro de 2026",
-        category: "Alimentação",
-        amount: "- R$ 187,30",
-        type: "expense",
-        icon: Car,
-        iconBackground: "bg-blue-50",
-        iconColor: "text-blue-500",
-    },
-    {
-        id: 2,
-        name: "iFood",
-        date: "14 de outubro de 2026",
-        category: "Alimentação",
-        amount: "- R$ 42,90",
-        type: "expense",
-        icon: Utensils,
-        iconBackground: "bg-rose-50",
-        iconColor: "text-rose-500",
-    },
-    {
-        id: 3,
-        name: "Salário",
-        date: "10 de outubro de 2026",
-        category: "Recebimento",
-        amount: "+ R$ 6.000,00",
-        type: "income",
-        icon: CircleDollarSign,
-        iconBackground: "bg-emerald-50",
-        iconColor: "text-emerald-500",
-    },
-    {
-        id: 4,
-        name: "Uber",
-        date: "08 de outubro de 2026",
-        category: "Transporte",
-        amount: "- R$ 24,50",
-        type: "expense",
-        icon: Car,
-        iconBackground: "bg-violet-50",
-        iconColor: "text-violet-500",
-    },
-    {
-        id: 5,
-        name: "Aluguel",
-        date: "05 de outubro de 2026",
-        category: "Moradia",
-        amount: "- R$ 900,00",
-        type: "expense",
-        icon: Car,
-        iconBackground: "bg-rose-50",
-        iconColor: "text-rose-500",
-    },
-]
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value)
+}
 
-export function RecentTransactionsCard() {
+function formatDate(value: string): string {
+    return new Date(value).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    })
+}
+
+export function RecentTransactionsCard({
+    transactions,
+}: RecentTransactionsCardProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-4">
@@ -93,36 +54,83 @@ export function RecentTransactionsCard() {
                 </button>
             </div>
 
-            <div className="divide-y divide-slate-100">
-                {recentTransactions.map((transaction) => {
-                    const Icon = transaction.icon
+            {transactions.length === 0 ? (
+                <div className="flex min-h-40 items-center justify-center">
+                    <p className="text-sm text-slate-500">
+                        Nenhuma transação neste período.
+                    </p>
+                </div>
+            ) : (
+                <div className="divide-y divide-slate-100">
+                    {transactions.map((transaction) => {
+                        const isIncome = transaction.typeName === "Income"
+                        const isTransfer = transaction.typeName === "Transfer"
+                        const isCreditCard = transaction.paymentMethodName === "CreditCard"
 
-                    return (
-                        <div
-                            key={transaction.id}
-                            className="flex items-center gap-3 py-3.5"
-                        >
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${transaction.iconBackground} ${transaction.iconColor}`}>
-                                <Icon size={18} />
+                        const Icon = isTransfer
+                            ? ArrowLeftRight
+                            : isIncome
+                              ? CircleDollarSign
+                              : isCreditCard
+                                ? CreditCard
+                                : transaction.category?.name === "Alimentação"
+                                  ? Utensils
+                                  : transaction.category?.name === "Transporte"
+                                    ? Car
+                                    : Wallet
+
+                        const description = transaction.category?.name
+                            ?? transaction.card?.name
+                            ?? transaction.account?.name
+                            ?? transaction.paymentMethodName
+
+                        const amountPrefix = isIncome ? "+" : isTransfer ? "" : "−"
+
+                        return (
+                            <div
+                                key={transaction.id}
+                                className="flex items-center gap-3 py-3.5"
+                            >
+                                <div
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                                        isIncome
+                                            ? "bg-emerald-50 text-emerald-500"
+                                            : isTransfer
+                                              ? "bg-blue-50 text-blue-500"
+                                              : isCreditCard
+                                                ? "bg-violet-50 text-violet-500"
+                                                : "bg-rose-50 text-rose-500"
+                                    }`}
+                                >
+                                    <Icon size={18} />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-slate-800">
+                                        {transaction.description}
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                        {formatDate(transaction.date)} • {description}
+                                    </p>
+                                </div>
+
+                                <span
+                                    className={`whitespace-nowrap text-sm font-bold ${
+                                        isIncome
+                                            ? "text-emerald-500"
+                                            : isTransfer
+                                              ? "text-blue-500"
+                                              : "text-rose-500"
+                                    }`}
+                                >
+                                    {amountPrefix} {formatCurrency(transaction.amount)}
+                                </span>
                             </div>
-
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-slate-800">
-                                    {transaction.name}
-                                </p>
-
-                                <p className="mt-0.5 text-xs text-slate-500">
-                                    {transaction.date} • {transaction.category}
-                                </p>
-                            </div>
-
-                            <span className={`text-sm font-bold ${transaction.type === "income" ? "text-emerald-500" : "text-rose-500"}`}>
-                                {transaction.amount}
-                            </span>
-                        </div>
-                    )
-                })}
-            </div>
+                        )
+                    })}
+                </div>
+            )}
         </section>
     )
 }

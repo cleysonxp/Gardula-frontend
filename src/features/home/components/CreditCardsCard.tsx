@@ -1,37 +1,30 @@
 import { ArrowRight, ChevronRight, CreditCard } from "lucide-react"
+import type { HomeCardResponse } from "@/features/home/types/home.types"
 
-interface CardData {
-    id: number
-    name: string
-    invoice: string
-    available: string
-    dueDate: string
-    icon: string
-    background: string
+interface CreditCardsCardProps {
+    cards: HomeCardResponse[]
 }
 
-const cards: CardData[] = [
-    {
-        id: 1,
-        name: "Nubank",
-        invoice: "R$ 842,50",
-        available: "R$ 2.157,50",
-        dueDate: "10/10/2026",
-        icon: "nu",
-        background: "bg-violet-600",
-    },
-    {
-        id: 2,
-        name: "Itaú",
-        invoice: "R$ 320,00",
-        available: "R$ 1.680,00",
-        dueDate: "15/10/2026",
-        icon: "it",
-        background: "bg-orange-500",
-    },
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value)
+}
+
+function formatDate(value: string | null) {
+    if (!value) return "Sem vencimento"
+
+    return new Intl.DateTimeFormat("pt-BR").format(new Date(value))
+}
+
+const cardStyles = [
+    { icon: "nu", background: "bg-violet-600" },
+    { icon: "ca", background: "bg-orange-500" },
+    { icon: "cc", background: "bg-blue-600" },
 ]
 
-export function CreditCardsCard() {
+export function CreditCardsCard({ cards }: CreditCardsCardProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-4">
@@ -54,54 +47,68 @@ export function CreditCardsCard() {
                 </button>
             </div>
 
-            <div className="divide-y divide-slate-100">
-                {cards.map((card) => (
-                    <div
-                        key={card.id}
-                        className="flex items-center gap-4 py-3"
-                    >
-                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white ${card.background}`}>
-                            {card.icon}
-                        </div>
+            {cards.length === 0 ? (
+                <div className="py-8 text-center">
+                    <p className="text-sm text-slate-500">
+                        Você ainda não possui cartões cadastrados.
+                    </p>
+                </div>
+            ) : (
+                <div className="divide-y divide-slate-100">
+                    {cards.map((card, index) => {
+                        const style = cardStyles[index % cardStyles.length]
 
-                        <div className="w-28 shrink-0">
-                            <p className="text-sm font-semibold text-slate-800">
-                                {card.name}
-                            </p>
+                        return (
+                            <div
+                                key={card.id}
+                                className="flex items-center gap-4 py-3"
+                            >
+                                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white ${style.background}`}>
+                                    {style.icon}
+                                </div>
 
-                            <p className="mt-1 text-xs text-slate-500">
-                                Fatura atual
-                            </p>
+                                <div className="w-28 shrink-0">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        {card.name}
+                                    </p>
 
-                            <p className="text-xs font-semibold text-slate-700">
-                                {card.invoice}
-                            </p>
-                        </div>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Fatura atual
+                                    </p>
 
-                        <div className="hidden flex-1 sm:block">
-                            <p className="text-xs text-slate-500">
-                                Limite disponível
-                            </p>
+                                    <p className="text-xs font-semibold text-slate-700">
+                                        {card.invoiceAmount !== null
+                                            ? formatCurrency(card.invoiceAmount)
+                                            : "Sem fatura"}
+                                    </p>
+                                </div>
 
-                            <p className="mt-1 text-xs font-semibold text-slate-700">
-                                {card.available}
-                            </p>
-                        </div>
+                                <div className="hidden flex-1 sm:block">
+                                    <p className="text-xs text-slate-500">
+                                        Limite disponível
+                                    </p>
 
-                        <div className="hidden sm:block">
-                            <p className="text-xs text-slate-500">
-                                Vencimento
-                            </p>
+                                    <p className="mt-1 text-xs font-semibold text-slate-700">
+                                        {formatCurrency(card.availableLimit)}
+                                    </p>
+                                </div>
 
-                            <p className="mt-1 text-xs font-semibold text-slate-700">
-                                {card.dueDate}
-                            </p>
-                        </div>
+                                <div className="hidden sm:block">
+                                    <p className="text-xs text-slate-500">
+                                        Vencimento
+                                    </p>
 
-                        <ChevronRight size={17} className="ml-auto text-slate-400" />
-                    </div>
-                ))}
-            </div>
+                                    <p className="mt-1 text-xs font-semibold text-slate-700">
+                                        {formatDate(card.invoiceDueDate)}
+                                    </p>
+                                </div>
+
+                                <ChevronRight size={17} className="ml-auto text-slate-400" />
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
         </section>
     )
 }

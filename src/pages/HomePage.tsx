@@ -13,6 +13,13 @@ import { getHomeOverview } from "../features/home/services/homeService"
 
 import type { HomeOverviewResponse } from "../features/home/types/home.types"
 
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value)
+}
+
 export function HomePage() {
     const [overview, setOverview] = useState<HomeOverviewResponse | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -63,8 +70,8 @@ export function HomePage() {
             <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <SummaryCard
                     title="Saldo total"
-                    value="R$ 8.450,00"
-                    description="12% em relação ao mês anterior"
+                    value={formatCurrency(overview.totalBalance)}
+                    description="Saldo atual das suas contas"
                     icon={Wallet}
                     iconBackground="bg-violet-50"
                     iconColor="text-violet-600"
@@ -73,8 +80,8 @@ export function HomePage() {
 
                 <SummaryCard
                     title="Entradas no mês"
-                    value="R$ 6.000,00"
-                    description="8% em relação ao mês anterior"
+                    value={formatCurrency(overview.monthlySummary.totalIncome)}
+                    description="Total de entradas no período"
                     icon={ArrowUp}
                     iconBackground="bg-emerald-50"
                     iconColor="text-emerald-600"
@@ -83,8 +90,8 @@ export function HomePage() {
 
                 <SummaryCard
                     title="Despesas no mês"
-                    value="R$ 2.350,00"
-                    description="15% em relação ao mês anterior"
+                    value={formatCurrency(overview.monthlySummary.totalExpense)}
+                    description="Total de despesas no período"
                     icon={ArrowDown}
                     iconBackground="bg-rose-50"
                     iconColor="text-rose-500"
@@ -93,8 +100,8 @@ export function HomePage() {
 
                 <SummaryCard
                     title="Saldo do mês"
-                    value="R$ 3.650,00"
-                    description="28% em relação ao mês anterior"
+                    value={formatCurrency(overview.monthlySummary.balance)}
+                    description="Entradas menos despesas"
                     icon={TrendingUp}
                     iconBackground="bg-blue-50"
                     iconColor="text-blue-500"
@@ -103,17 +110,26 @@ export function HomePage() {
             </section>
 
             <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <CategorySpendingCard />
-                <MonthlyBudgetCard />
+                <CategorySpendingCard
+                    categories={overview.categorySpending}
+                    totalExpenses={overview.monthlySummary.totalExpense}
+                />
+                <MonthlyBudgetCard
+                    budget={overview.budget}
+                    year={overview.year}
+                    month={overview.month}
+                />
             </div>
 
             <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <RecentTransactionsCard />
-                <FinancialGoalsCard />
+                <RecentTransactionsCard
+                    transactions={overview.recentTransactions}
+                />
+                <FinancialGoalsCard goals={overview.goals} />
             </div>
 
             <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <CreditCardsCard />
+                <CreditCardsCard cards={overview.cardItems} />
                 <FinancialInsightCard />
             </div>
         </div>

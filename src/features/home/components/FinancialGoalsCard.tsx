@@ -1,50 +1,30 @@
 import { ArrowRight, Home, Plane, Target } from "lucide-react"
 
-interface Goal {
-    id: number
-    name: string
-    current: string
-    target: string
-    percentage: number
-    icon: React.ElementType
-    iconBackground: string
-    iconColor: string
+import type { FinancialGoalResponse } from "@/features/home/types/home.types"
+
+interface FinancialGoalsCardProps {
+    goals: FinancialGoalResponse[]
 }
 
-const goals: Goal[] = [
-    {
-        id: 1,
-        name: "Reserva de emergência",
-        current: "R$ 3.500,00",
-        target: "R$ 5.000,00",
-        percentage: 70,
-        icon: Target,
-        iconBackground: "bg-blue-50",
-        iconColor: "text-blue-500",
-    },
-    {
-        id: 2,
-        name: "Viagem para Europa",
-        current: "R$ 4.000,00",
-        target: "R$ 10.000,00",
-        percentage: 40,
-        icon: Plane,
-        iconBackground: "bg-blue-50",
-        iconColor: "text-blue-500",
-    },
-    {
-        id: 3,
-        name: "Entrada do apartamento",
-        current: "R$ 25.000,00",
-        target: "R$ 100.000,00",
-        percentage: 25,
-        icon: Home,
-        iconBackground: "bg-orange-50",
-        iconColor: "text-orange-500",
-    },
-]
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value)
+}
 
-export function FinancialGoalsCard() {
+function getGoalIcon(icon: string) {
+    switch (icon.toLowerCase()) {
+        case "plane":
+            return Plane
+        case "home":
+            return Home
+        default:
+            return Target
+    }
+}
+
+export function FinancialGoalsCard({ goals }: FinancialGoalsCardProps) {
     return (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between gap-4">
@@ -67,44 +47,63 @@ export function FinancialGoalsCard() {
                 </button>
             </div>
 
-            <div className="space-y-5">
-                {goals.map((goal) => {
-                    const Icon = goal.icon
+            {goals.length === 0 ? (
+                <div className="flex min-h-40 flex-col items-center justify-center text-center">
+                    <Target size={28} className="mb-3 text-slate-300" />
 
-                    return (
-                        <div key={goal.id} className="flex gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${goal.iconBackground} ${goal.iconColor}`}>
-                                <Icon size={18} />
-                            </div>
+                    <p className="text-sm font-semibold text-slate-800">
+                        Você ainda não tem objetivos
+                    </p>
 
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-3">
-                                    <p className="truncate text-sm font-semibold text-slate-800">
-                                        {goal.name}
+                    <p className="mt-1 text-xs text-slate-500">
+                        Crie uma meta financeira para acompanhar seu progresso.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-5">
+                    {goals.map((goal) => {
+                        const Icon = getGoalIcon(goal.icon)
+                        const percentage = Math.min(100, Math.max(0, goal.percentage))
+
+                        return (
+                            <div key={goal.id} className="flex gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-500">
+                                    <Icon size={18} />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="truncate text-sm font-semibold text-slate-800">
+                                            {goal.name}
+                                        </p>
+
+                                        <span className="shrink-0 text-xs font-bold text-slate-600">
+                                            {percentage.toLocaleString("pt-BR", {
+                                                maximumFractionDigits: 1,
+                                            })}%
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                        <div
+                                            className={`h-full rounded-full ${
+                                                goal.isCompleted
+                                                    ? "bg-emerald-500"
+                                                    : "bg-violet-500"
+                                            }`}
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
+
+                                    <p className="mt-1.5 text-xs text-slate-500">
+                                        {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                                     </p>
-
-                                    <span className="text-xs font-bold text-slate-600">
-                                        {goal.percentage}%
-                                    </span>
                                 </div>
-
-                                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                                    <div
-                                        className="h-full rounded-full bg-violet-500"
-                                        style={{
-                                            width: `${goal.percentage}%`,
-                                        }}
-                                    />
-                                </div>
-
-                                <p className="mt-1.5 text-xs text-slate-500">
-                                    {goal.current} / {goal.target}
-                                </p>
                             </div>
-                        </div>
-                    )
-                })}
-            </div>
+                        )
+                    })}
+                </div>
+            )}
         </section>
     )
 }
