@@ -68,11 +68,10 @@ export function PlanningPage() {
     const [selectedGoalId, setSelectedGoalId] =
         useState<number | null>(null)
 
-    const [year, setYear] =
-        useState(2026)
+    const now = new Date()
 
-    const [month, setMonth] =
-        useState(9)
+    const [year, setYear] = useState(now.getFullYear())
+    const [month, setMonth] = useState(now.getMonth() + 1)
 
     const fetchPlanningData = async () => {
         try {

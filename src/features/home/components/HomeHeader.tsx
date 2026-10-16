@@ -1,6 +1,27 @@
-import { CalendarDays, ChevronRight } from "lucide-react"
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 
-export function HomeHeader() {
+interface HomeHeaderProps {
+    year: number
+    month: number
+    onPreviousMonth: () => void
+    onNextMonth: () => void
+    isCurrentMonth: boolean
+}
+
+function formatMonth(year: number, month: number): string {
+    return new Intl.DateTimeFormat("pt-BR", {
+        month: "long",
+        year: "numeric",
+    }).format(new Date(year, month - 1, 1))
+}
+
+export function HomeHeader({
+    year,
+    month,
+    onPreviousMonth,
+    onNextMonth,
+    isCurrentMonth,
+}: HomeHeaderProps) {
     return (
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -13,14 +34,33 @@ export function HomeHeader() {
                 </p>
             </div>
 
-            <button
-                type="button"
-                className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm"
-            >
-                <CalendarDays size={17} />
-                Outubro 2026
-                <ChevronRight size={16} />
-            </button>
+            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+                <button
+                    type="button"
+                    onClick={onPreviousMonth}
+                    aria-label="Mês anterior"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100"
+                >
+                    <ChevronLeft size={17} />
+                </button>
+
+                <div className="flex min-w-36 items-center justify-center gap-2 px-1">
+                    <CalendarDays size={17} className="text-violet-600" />
+                    <span className="text-sm font-semibold capitalize text-slate-700">
+                        {formatMonth(year, month)}
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={onNextMonth}
+                    disabled={isCurrentMonth}
+                    aria-label="Próximo mês"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                    <ChevronRight size={17} />
+                </button>
+            </div>
         </header>
     )
 }

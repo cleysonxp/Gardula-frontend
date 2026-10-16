@@ -21,6 +21,10 @@ function formatCurrency(value: number): string {
 }
 
 export function HomePage() {
+    const now = new Date()
+
+    const [year, setYear] = useState(now.getFullYear())
+    const [month, setMonth] = useState(now.getMonth() + 1)
     const [overview, setOverview] = useState<HomeOverviewResponse | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -31,10 +35,7 @@ export function HomePage() {
                 setIsLoading(true)
                 setError(null)
 
-                const data = await getHomeOverview(
-                    new Date().getFullYear(),
-                    new Date().getMonth() + 1,
-                )
+                const data = await getHomeOverview(year, month)
 
                 setOverview(data)
             } catch {
@@ -45,93 +46,136 @@ export function HomePage() {
         }
 
         loadOverview()
-    }, [])
+    }, [year, month])
 
-    if (isLoading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-[#F7F7FC] px-6">
-                <p className="text-sm text-slate-500">Carregando dados financeiros...</p>
-            </div>
-        )
+    function handlePreviousMonth() {
+        if (month === 1) {
+            setMonth(12)
+            setYear((currentYear) => currentYear - 1)
+            return
+        }
+
+        setMonth((currentMonth) => currentMonth - 1)
     }
 
-    if (error || !overview) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-[#F7F7FC] px-6">
-                <p className="text-sm text-rose-600">{error ?? "Nenhum dado disponível."}</p>
-            </div>
-        )
+    function handleNextMonth() {
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
+        const currentMonth = currentDate.getMonth() + 1
+
+        if (year === currentYear && month === currentMonth) {
+            return
+        }
+
+        if (month === 12) {
+            setMonth(1)
+            setYear((currentYear) => currentYear + 1)
+            return
+        }
+
+        setMonth((currentMonth) => currentMonth + 1)
     }
+
+    const currentDate = new Date()
+    const isCurrentMonth =
+        year === currentDate.getFullYear() &&
+        month === currentDate.getMonth() + 1
 
     return (
         <div className="min-h-screen bg-[#F7F7FC] px-6 py-6 lg:px-7">
-            <HomeHeader />
+            <HomeHeader
+                year={year}
+                month={month}
+                onPreviousMonth={handlePreviousMonth}
+                onNextMonth={handleNextMonth}
+                isCurrentMonth={isCurrentMonth}
+            />
 
-            <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <SummaryCard
-                    title="Saldo total"
-                    value={formatCurrency(overview.totalBalance)}
-                    description="Saldo atual das suas contas"
-                    icon={Wallet}
-                    iconBackground="bg-violet-50"
-                    iconColor="text-violet-600"
-                    trend="up"
-                />
+            
 
-                <SummaryCard
-                    title="Entradas no mês"
-                    value={formatCurrency(overview.monthlySummary.totalIncome)}
-                    description="Total de entradas no período"
-                    icon={ArrowUp}
-                    iconBackground="bg-emerald-50"
-                    iconColor="text-emerald-600"
-                    trend="up"
-                />
+            {isLoading ? (
+                <div className="flex min-h-[400px] items-center justify-center">
+                    <p className="text-sm text-slate-500">
+                        Carregando dados financeiros...
+                    </p>
+                </div>
+            ) : error || !overview ? (
+                <div className="flex min-h-[400px] items-center justify-center">
+                    <p className="text-sm text-rose-600">
+                        {error ?? "Nenhum dado disponível."}
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <SummaryCard
+                            title="Saldo total"
+                            value={formatCurrency(overview.totalBalance)}
+                            description="Saldo atual das suas contas"
+                            icon={Wallet}
+                            iconBackground="bg-violet-50"
+                            iconColor="text-violet-600"
+                            trend="up"
+                        />
 
-                <SummaryCard
-                    title="Despesas no mês"
-                    value={formatCurrency(overview.monthlySummary.totalExpense)}
-                    description="Total de despesas no período"
-                    icon={ArrowDown}
-                    iconBackground="bg-rose-50"
-                    iconColor="text-rose-500"
-                    trend="down"
-                />
+                        <SummaryCard
+                            title="Entradas no mês"
+                            value={formatCurrency(overview.monthlySummary.totalIncome)}
+                            description="Total de entradas no período"
+                            icon={ArrowUp}
+                            iconBackground="bg-emerald-50"
+                            iconColor="text-emerald-600"
+                            trend="up"
+                        />
 
-                <SummaryCard
-                    title="Saldo do mês"
-                    value={formatCurrency(overview.monthlySummary.balance)}
-                    description="Entradas menos despesas"
-                    icon={TrendingUp}
-                    iconBackground="bg-blue-50"
-                    iconColor="text-blue-500"
-                    trend="up"
-                />
-            </section>
+                        <SummaryCard
+                            title="Despesas no mês"
+                            value={formatCurrency(overview.monthlySummary.totalExpense)}
+                            description="Total de despesas no período"
+                            icon={ArrowDown}
+                            iconBackground="bg-rose-50"
+                            iconColor="text-rose-500"
+                            trend="down"
+                        />
 
-            <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <CategorySpendingCard
-                    categories={overview.categorySpending}
-                    totalExpenses={overview.monthlySummary.totalExpense}
-                />
-                <MonthlyBudgetCard
-                    budget={overview.budget}
-                    year={overview.year}
-                    month={overview.month}
-                />
-            </div>
+                        <SummaryCard
+                            title="Saldo do mês"
+                            value={formatCurrency(overview.monthlySummary.balance)}
+                            description="Entradas menos despesas"
+                            icon={TrendingUp}
+                            iconBackground="bg-blue-50"
+                            iconColor="text-blue-500"
+                            trend="up"
+                        />
+                    </section>
 
-            <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <RecentTransactionsCard
-                    transactions={overview.recentTransactions}
-                />
-                <FinancialGoalsCard goals={overview.goals} />
-            </div>
+                    <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+                        <CategorySpendingCard
+                            categories={overview.categorySpending}
+                            totalExpenses={overview.monthlySummary.totalExpense}
+                        />
 
-            <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-                <CreditCardsCard cards={overview.cardItems} />
-                <FinancialInsightCard />
-            </div>
+                        <MonthlyBudgetCard
+                            budget={overview.budget}
+                            year={overview.year}
+                            month={overview.month}
+                        />
+                    </div>
+
+                    <div className="mb-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+                        <RecentTransactionsCard
+                            transactions={overview.recentTransactions}
+                        />
+
+                        <FinancialGoalsCard goals={overview.goals} />
+                    </div>
+
+                    <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+                        <CreditCardsCard cards={overview.cardItems} />
+                        <FinancialInsightCard summary={overview.monthlySummary} />
+                    </div>
+                </>
+            )}
         </div>
     )
 }

@@ -1,6 +1,35 @@
 import { TrendingUp } from "lucide-react"
+import type { TransactionSummaryResponse } from "@/features/home/types/home.types"
 
-export function FinancialInsightCard() {
+interface FinancialInsightCardProps {
+    summary: TransactionSummaryResponse
+}
+
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    }).format(value)
+}
+
+export function FinancialInsightCard({
+    summary,
+}: FinancialInsightCardProps) {
+    const hasTransactions = summary.totalTransactions > 0
+    const isPositive = summary.balance >= 0
+
+    const title = !hasTransactions
+        ? "Comece a acompanhar suas finanças"
+        : isPositive
+          ? "Seu mês está no positivo!"
+          : "Atenção ao resultado do mês"
+
+    const description = !hasTransactions
+        ? "Registre suas movimentações para acompanhar sua evolução financeira."
+        : isPositive
+          ? `Seu resultado mensal é de ${formatCurrency(summary.balance)}. Continue acompanhando suas receitas e despesas!`
+          : `Suas despesas superam suas receitas em ${formatCurrency(Math.abs(summary.balance))}. Vale revisar seus gastos.`
+
     return (
         <section className="flex min-h-[190px] flex-col justify-between overflow-hidden rounded-2xl border border-violet-100 bg-violet-50 p-6">
             <div>
@@ -9,11 +38,11 @@ export function FinancialInsightCard() {
                 </div>
 
                 <h2 className="mt-4 text-lg font-bold text-slate-950">
-                    Você está no caminho certo!
+                    {title}
                 </h2>
 
                 <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">
-                    Seu saldo do mês está 28% maior que no mês passado. Continue assim!
+                    {description}
                 </p>
             </div>
 
