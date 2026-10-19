@@ -20,6 +20,7 @@ import type { CardResponse } from "../features/cards/types/card.types";
 import {
   createRecurringTransaction,
   getRecurringTransactions,
+  updateRecurringTransaction,
 } from "../features/recurring/services/recurringService";
 
 import { mapRecurringTransaction } from "../features/recurring/mappers/recurringMapper";
@@ -93,6 +94,7 @@ export function RecurringPage() {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [cards, setCards] = useState<CardResponse[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransactionResponse[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
@@ -110,6 +112,7 @@ export function RecurringPage() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [editingItem, setEditingItem] = useState<RecurringItem | null>(null);
   const [notice, setNotice] = useState("");
 
   const [formName, setFormName] = useState("");
@@ -130,6 +133,7 @@ export function RecurringPage() {
         const response = await getRecurringTransactions();
 
         if (!cancelled) {
+          setRecurringTransactions(response);
           setItems(response.map(mapRecurringTransaction));
         }
       } catch (error) {
@@ -372,6 +376,17 @@ export function RecurringPage() {
       return;
     }
 
+    const originalTransaction = editingItem
+      ? recurringTransactions.find(
+        (transaction) => transaction.id === editingItem.id,
+      )
+      : null;
+
+    if (editingItem && !originalTransaction) {
+      setNotice("Não foi possível localizar a recorrência para edição.");
+      return;
+    }
+
     const request: CreateRecurringTransactionRequest = {
       name: formName.trim(),
       type: expectedCategoryType,
@@ -381,34 +396,63 @@ export function RecurringPage() {
       accountId: isCreditCard ? null : formAccountId,
       cardId: isCreditCard ? formCardId : null,
       dueDay: day,
-      startDate: new Date().toISOString(),
-      endDate: null,
+      startDate: originalTransaction?.startDate ?? new Date().toISOString(),
+      endDate: originalTransaction?.endDate ?? null,
     };
 
     try {
       setIsSubmitting(true);
 
-      const created: RecurringTransactionResponse =
-        await createRecurringTransaction(request);
+      const saved: RecurringTransactionResponse = editingItem
+        ? await updateRecurringTransaction(editingItem.id, request)
+        : await createRecurringTransaction(request);
 
-      setItems((previous) => [
-        mapRecurringTransaction(created),
-        ...previous,
-      ]);
+      setRecurringTransactions((previous) => {
+        if (editingItem) {
+          return previous.map((transaction) =>
+            transaction.id === saved.id ? saved : transaction,
+          );
+        }
+
+        return [saved, ...previous];
+      });
+
+      setItems((previous) => {
+        const mapped = mapRecurringTransaction(saved);
+
+        if (editingItem) {
+          return previous.map((item) =>
+            item.id === saved.id ? mapped : item,
+          );
+        }
+
+        return [mapped, ...previous];
+      });
 
       setSearch("");
       setTypeFilter("Todas");
       setStatusFilter("Todos");
       setShowForm(false);
+      setEditingItem(null);
       resetForm();
-      setNotice("Recorrência criada com sucesso.");
+
+      setNotice(
+        editingItem
+          ? "Recorrência atualizada com sucesso."
+          : "Recorrência criada com sucesso.",
+      );
     } catch (error) {
-      console.error("Failed to create recurring transaction:", error);
-      setNotice("Não foi possível criar a recorrência. Verifique os dados e tente novamente.");
+      console.error("Failed to save recurring transaction:", error);
+      setNotice(
+        editingItem
+          ? "Não foi possível atualizar a recorrência. Verifique os dados e tente novamente."
+          : "Não foi possível criar a recorrência. Verifique os dados e tente novamente.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const toggleStatus = (id: number) => {
     setNotice("A alteração de status será integrada na próxima etapa.");
@@ -421,7 +465,26 @@ export function RecurringPage() {
   };
 
   const handleEdit = (item: RecurringItem) => {
-    setNotice(`${item.name}: a edição será integrada na próxima etapa.`);
+    const transaction = recurringTransactions.find(
+      (transaction) => transaction.id === item.id
+    );
+
+    if (!transaction) {
+      setNotice("Não foi possível localizar a recorrência para edição.");
+      return;
+    }
+
+    setEditingItem(item);
+    setFormName(transaction.name);
+    setFormAmount(String(transaction.amount));
+    setFormDay(String(transaction.dueDay));
+    setFormType(transaction.type === TransactionType.Income ? "Recebimento" : "Pagamento");
+    setFormCategoryId(transaction.categoryId);
+    setFormPaymentMethod(transaction.paymentMethod);
+    setFormAccountId(transaction.accountId);
+    setFormCardId(transaction.cardId);
+
+    setShowForm(true);
   };
 
   const filteredCategories = categories.filter(
@@ -501,6 +564,7 @@ export function RecurringPage() {
 
         <RecurringFormModal
           isOpen={showForm}
+          isEditing={editingItem !== null}
           name={formName}
           amount={formAmount}
           dueDay={formDay}
@@ -548,6 +612,7 @@ export function RecurringPage() {
           onCardChange={setFormCardId}
           onClose={() => {
             setShowForm(false);
+            setEditingItem(null);
             resetForm();
           }}
           onSubmit={handleCreate}

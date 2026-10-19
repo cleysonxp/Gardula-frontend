@@ -29,6 +29,7 @@ export type RecurringPaymentMethod = {
 
 type RecurringFormModalProps = {
     isOpen: boolean;
+    isEditing: boolean;
     name: string;
     amount: string;
     dueDay: string;
@@ -59,6 +60,7 @@ type RecurringFormModalProps = {
 
 export function RecurringFormModal({
     isOpen,
+    isEditing,
     name,
     amount,
     dueDay,
@@ -111,7 +113,7 @@ export function RecurringFormModal({
                 <div className="mb-6 flex items-start justify-between gap-4">
                     <div>
                         <h2 id="recurring-form-title" className="text-xl font-bold text-slate-900">
-                            Nova recorrência
+                            {isEditing ? "Editar recorrência" : "Nova recorrência"}
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
                             Cadastre um recebimento ou pagamento programado.
@@ -327,7 +329,13 @@ export function RecurringFormModal({
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Plus size={17} />
-                            {isSubmitting ? "Criando..." : "Criar recorrência"}
+                            {isSubmitting
+                                ? isEditing
+                                    ? "Salvando..."
+                                    : "Criando..."
+                                : isEditing
+                                    ? "Salvar alterações"
+                                    : "Criar recorrência"}
                         </button>
                     </div>
                 </form>
