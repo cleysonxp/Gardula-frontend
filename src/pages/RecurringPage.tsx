@@ -1,5 +1,4 @@
-
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { RecurringCalendar } from "../features/recurring/components/RecurringCalendar";
 import { RecurringFormModal } from "../features/recurring/components/RecurringFormModal";
@@ -9,134 +8,37 @@ import { RecurringNotice } from "../features/recurring/components/RecurringNotic
 import { RecurringSummary } from "../features/recurring/components/RecurringSummary";
 import { UpcomingRecurring } from "../features/recurring/components/UpcomingRecurring";
 
+import { getCategories } from "../features/categories/services/categoryService";
+import type { CategoryResponse } from "../features/categories/services/categoryService";
+
+import { getAccounts } from "../features/accounts/services/accountService";
+import type { AccountResponse } from "../features/accounts/services/accountService";
+
+import { getCards } from "../features/cards/services/cardService";
+import type { CardResponse } from "../features/cards/types/card.types";
+
+import {
+  createRecurringTransaction,
+  getRecurringTransactions,
+} from "../features/recurring/services/recurringService";
+
+import { mapRecurringTransaction } from "../features/recurring/mappers/recurringMapper";
+
+import {
+  PaymentMethod,
+  TransactionType,
+} from "../features/recurring/types/recurring.types";
+
+import type {
+  CreateRecurringTransactionRequest,
+  RecurringTransactionResponse,
+} from "../features/recurring/types/recurring.types";
+
 import type {
   RecurringItem,
   RecurringStatus,
   RecurringType,
 } from "../features/recurring/types/RecurringItem";
-
-const initialRecurring: RecurringItem[] = [
-  {
-    id: 1,
-    name: "Salário",
-    category: "Renda",
-    type: "Recebimento",
-    amount: 6500,
-    dueDay: 5,
-    frequency: "Mensal",
-    paymentMethod: "Transferência",
-    account: "Conta principal",
-    status: "Ativa",
-    color: "bg-emerald-100 text-emerald-700",
-    initials: "SA",
-    startDate: "2026-01-05",
-  },
-  {
-    id: 2,
-    name: "Aluguel",
-    category: "Moradia",
-    type: "Pagamento",
-    amount: 1800,
-    dueDay: 10,
-    frequency: "Mensal",
-    paymentMethod: "Pix",
-    account: "Conta principal",
-    status: "Ativa",
-    color: "bg-orange-100 text-orange-700",
-    initials: "AL",
-    startDate: "2026-01-10",
-  },
-  {
-    id: 3,
-    name: "Netflix",
-    category: "Assinaturas",
-    type: "Pagamento",
-    amount: 39.9,
-    dueDay: 12,
-    frequency: "Mensal",
-    paymentMethod: "Cartão de crédito",
-    account: "Cartão principal",
-    status: "Ativa",
-    color: "bg-red-100 text-red-700",
-    initials: "NE",
-    startDate: "2026-01-12",
-  },
-  {
-    id: 4,
-    name: "Internet",
-    category: "Serviços",
-    type: "Pagamento",
-    amount: 119.9,
-    dueDay: 15,
-    frequency: "Mensal",
-    paymentMethod: "Débito automático",
-    account: "Conta principal",
-    status: "Ativa",
-    color: "bg-blue-100 text-blue-700",
-    initials: "IN",
-    startDate: "2026-01-15",
-  },
-  {
-    id: 5,
-    name: "Academia",
-    category: "Saúde",
-    type: "Pagamento",
-    amount: 99.9,
-    dueDay: 18,
-    frequency: "Mensal",
-    paymentMethod: "Cartão de crédito",
-    account: "Cartão principal",
-    status: "Ativa",
-    color: "bg-violet-100 text-violet-700",
-    initials: "AC",
-    startDate: "2026-01-18",
-  },
-  {
-    id: 6,
-    name: "Freelance",
-    category: "Renda extra",
-    type: "Recebimento",
-    amount: 850,
-    dueDay: 20,
-    frequency: "Mensal",
-    paymentMethod: "Transferência",
-    account: "Conta principal",
-    status: "Ativa",
-    color: "bg-cyan-100 text-cyan-700",
-    initials: "FR",
-    startDate: "2026-02-20",
-  },
-  {
-    id: 7,
-    name: "Spotify",
-    category: "Assinaturas",
-    type: "Pagamento",
-    amount: 21.9,
-    dueDay: 22,
-    frequency: "Mensal",
-    paymentMethod: "Cartão de crédito",
-    account: "Cartão principal",
-    status: "Ativa",
-    color: "bg-green-100 text-green-700",
-    initials: "SP",
-    startDate: "2026-01-22",
-  },
-  {
-    id: 8,
-    name: "Seguro do carro",
-    category: "Transporte",
-    type: "Pagamento",
-    amount: 240,
-    dueDay: 25,
-    frequency: "Mensal",
-    paymentMethod: "Débito automático",
-    account: "Conta principal",
-    status: "Pausada",
-    color: "bg-amber-100 text-amber-700",
-    initials: "SC",
-    startDate: "2026-01-25",
-  },
-];
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -176,8 +78,27 @@ const isSameDay = (first: Date, second: Date) =>
   first.getMonth() === second.getMonth() &&
   first.getDate() === second.getDate();
 
+const paymentMethods = [
+  { id: PaymentMethod.Pix, name: "Pix" },
+  { id: PaymentMethod.Debit, name: "Débito" },
+  { id: PaymentMethod.CreditCard, name: "Cartão de crédito" },
+  { id: PaymentMethod.Cash, name: "Dinheiro" },
+  { id: PaymentMethod.BankSlip, name: "Boleto" },
+  { id: PaymentMethod.Other, name: "Outro" },
+  { id: PaymentMethod.Account, name: "Conta" },
+];
+
 export function RecurringPage() {
-  const [items, setItems] = useState<RecurringItem[]>(initialRecurring);
+  const [items, setItems] = useState<RecurringItem[]>([]);
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
+  const [cards, setCards] = useState<CardResponse[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -195,7 +116,105 @@ export function RecurringPage() {
   const [formAmount, setFormAmount] = useState("");
   const [formDay, setFormDay] = useState("10");
   const [formType, setFormType] = useState<RecurringType>("Pagamento");
-  const [formCategory, setFormCategory] = useState("Outros");
+  const [formCategoryId, setFormCategoryId] = useState<number | null>(null);
+  const [formPaymentMethod, setFormPaymentMethod] = useState<number>(PaymentMethod.Pix);
+  const [formAccountId, setFormAccountId] = useState<number | null>(null);
+  const [formCardId, setFormCardId] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRecurringTransactions() {
+      try {
+        setIsLoading(true);
+        const response = await getRecurringTransactions();
+
+        if (!cancelled) {
+          setItems(response.map(mapRecurringTransaction));
+        }
+      } catch (error) {
+        console.error("Failed to load recurring transactions:", error);
+
+        if (!cancelled) {
+          setNotice("Não foi possível carregar as recorrências.");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    loadRecurringTransactions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCategories() {
+      try {
+        const response = await getCategories();
+
+        if (!cancelled) {
+          setCategories(response.filter((category) => category.isActive));
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+
+        if (!cancelled) {
+          setNotice("Não foi possível carregar as categorias.");
+        }
+      } finally {
+        if (!cancelled) setIsLoadingCategories(false);
+      }
+    }
+
+    async function loadAccounts() {
+      try {
+        const response = await getAccounts();
+
+        if (!cancelled) {
+          setAccounts(response.filter((account) => account.isActive));
+        }
+      } catch (error) {
+        console.error("Failed to load accounts:", error);
+
+        if (!cancelled) {
+          setNotice("Não foi possível carregar as contas.");
+        }
+      } finally {
+        if (!cancelled) setIsLoadingAccounts(false);
+      }
+    }
+
+    async function loadCards() {
+      try {
+        const response = await getCards();
+
+        if (!cancelled) {
+          setCards(response.filter((card) => card.isActive));
+        }
+      } catch (error) {
+        console.error("Failed to load cards:", error);
+
+        if (!cancelled) {
+          setNotice("Não foi possível carregar os cartões.");
+        }
+      } finally {
+        if (!cancelled) setIsLoadingCards(false);
+      }
+    }
+
+    loadCategories();
+    loadAccounts();
+    loadCards();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeItems = useMemo(
     () => items.filter((item) => item.status === "Ativa"),
@@ -208,11 +227,8 @@ export function RecurringPage() {
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
 
-      const matchesType =
-        typeFilter === "Todas" || item.type === typeFilter;
-
-      const matchesStatus =
-        statusFilter === "Todos" || item.status === statusFilter;
+      const matchesType = typeFilter === "Todas" || item.type === typeFilter;
+      const matchesStatus = statusFilter === "Todos" || item.status === statusFilter;
 
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -262,7 +278,6 @@ export function RecurringPage() {
     );
 
     const offset = firstDay.getDay();
-
     const daysInMonth = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth() + 1,
@@ -279,19 +294,9 @@ export function RecurringPage() {
     activeItems.filter((item) =>
       isSameDay(
         getDueDate(item, currentMonth),
-        new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth(),
-          day,
-        ),
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day),
       ),
     );
-
-  const selectedDayItems = selectedDay
-    ? activeItems.filter((item) =>
-        isSameDay(getDueDate(item, currentMonth), selectedDay),
-      )
-    : [];
 
   const changeMonth = (direction: number) => {
     setCurrentMonth(
@@ -306,25 +311,21 @@ export function RecurringPage() {
     setSelectedDay(null);
   };
 
-  const toggleStatus = (id: number) => {
-    setItems((previous) =>
-      previous.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: item.status === "Ativa" ? "Pausada" : "Ativa",
-            }
-          : item,
-      ),
-    );
-
-    setNotice("Status da recorrência atualizado.");
+  const resetForm = () => {
+    setFormName("");
+    setFormAmount("");
+    setFormDay("10");
+    setFormType("Pagamento");
+    setFormCategoryId(null);
+    setFormPaymentMethod(PaymentMethod.Pix);
+    setFormAccountId(null);
+    setFormCardId(null);
   };
 
-  const handleCreate = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const amount = Number(formAmount.replace(",", "."));
+    const amount = Number(formAmount);
     const day = Number(formDay);
 
     if (!formName.trim() || !Number.isFinite(amount) || amount <= 0) {
@@ -337,40 +338,80 @@ export function RecurringPage() {
       return;
     }
 
-    const colors = [
-      "bg-violet-100 text-violet-700",
-      "bg-blue-100 text-blue-700",
-      "bg-emerald-100 text-emerald-700",
-      "bg-orange-100 text-orange-700",
-    ];
+    const expectedCategoryType =
+      formType === "Recebimento"
+        ? TransactionType.Income
+        : TransactionType.Expense;
 
-    const newItem: RecurringItem = {
-      id: Date.now(),
+    const selectedCategory = categories.find(
+      (category) =>
+        category.id === formCategoryId &&
+        category.isActive &&
+        category.type === expectedCategoryType,
+    );
+
+    if (!selectedCategory) {
+      setNotice("Selecione uma categoria válida para o tipo escolhido.");
+      return;
+    }
+
+    const isCreditCard = formPaymentMethod === PaymentMethod.CreditCard;
+
+    if (isCreditCard && formType !== "Pagamento") {
+      setNotice("Cartão de crédito só pode ser usado em pagamentos.");
+      return;
+    }
+
+    if (isCreditCard && !cards.some((card) => card.id === formCardId)) {
+      setNotice("Selecione um cartão ativo.");
+      return;
+    }
+
+    if (!isCreditCard && !accounts.some((account) => account.id === formAccountId)) {
+      setNotice("Selecione uma conta ativa.");
+      return;
+    }
+
+    const request: CreateRecurringTransactionRequest = {
       name: formName.trim(),
-      category: formCategory,
-      type: formType,
+      type: expectedCategoryType,
       amount,
+      categoryId: selectedCategory.id,
+      paymentMethod: formPaymentMethod,
+      accountId: isCreditCard ? null : formAccountId,
+      cardId: isCreditCard ? formCardId : null,
       dueDay: day,
-      frequency: "Mensal",
-      paymentMethod: "Não definido",
-      account: "Não definida",
-      status: "Ativa",
-      color: colors[items.length % colors.length],
-      initials: formName.trim().slice(0, 2).toUpperCase(),
-      startDate: new Date().toISOString().slice(0, 10),
+      startDate: new Date().toISOString(),
+      endDate: null,
     };
 
-    setItems((previous) => [newItem, ...previous]);
-    setSearch("");
-    setTypeFilter("Todas");
-    setStatusFilter("Todos");
-    setShowForm(false);
-    setFormName("");
-    setFormAmount("");
-    setFormDay("10");
-    setFormType("Pagamento");
-    setFormCategory("Outros");
-    setNotice("Recorrência adicionada com sucesso.");
+    try {
+      setIsSubmitting(true);
+
+      const created: RecurringTransactionResponse =
+        await createRecurringTransaction(request);
+
+      setItems((previous) => [
+        mapRecurringTransaction(created),
+        ...previous,
+      ]);
+
+      setSearch("");
+      setTypeFilter("Todas");
+      setStatusFilter("Todos");
+      setShowForm(false);
+      resetForm();
+      setNotice("Recorrência criada com sucesso.");
+    } catch (error) {
+      console.error("Failed to create recurring transaction:", error);
+      setNotice("Não foi possível criar a recorrência. Verifique os dados e tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleStatus = (id: number) => {
+    setNotice("A alteração de status será integrada na próxima etapa.");
   };
 
   const handleClearFilters = () => {
@@ -380,10 +421,17 @@ export function RecurringPage() {
   };
 
   const handleEdit = (item: RecurringItem) => {
-    setNotice(
-      `${item.name}: a edição será implementada na próxima etapa.`,
-    );
+    setNotice(`${item.name}: a edição será integrada na próxima etapa.`);
   };
+
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.isActive &&
+      category.type ===
+      (formType === "Recebimento"
+        ? TransactionType.Income
+        : TransactionType.Expense),
+  );
 
   return (
     <div className="min-h-screen bg-[#F8F9FC] text-slate-800">
@@ -396,10 +444,13 @@ export function RecurringPage() {
 
         <RecurringHeader onCreate={() => setShowForm(true)} />
 
-        <RecurringNotice
-          message={notice}
-          onClose={() => setNotice("")}
-        />
+        <RecurringNotice message={notice} onClose={() => setNotice("")} />
+
+        {isLoading && (
+          <p className="text-sm text-slate-500">
+            Carregando recorrências...
+          </p>
+        )}
 
         <RecurringSummary
           monthlyIncome={monthlyIncome}
@@ -454,13 +505,51 @@ export function RecurringPage() {
           amount={formAmount}
           dueDay={formDay}
           type={formType}
-          category={formCategory}
+          categoryId={formCategoryId}
+          paymentMethod={formPaymentMethod}
+          accountId={formAccountId}
+          cardId={formCardId}
+          categories={filteredCategories}
+          accounts={accounts}
+          cards={cards.map((card) => ({
+            id: card.id,
+            name: card.name,
+            lastFourDigits: card.lastFourDigits,
+            isActive: card.isActive,
+          }))}
+          paymentMethods={paymentMethods}
+          isLoadingCategories={isLoadingCategories}
+          isLoadingAccounts={isLoadingAccounts}
+          isLoadingCards={isLoadingCards}
+          isSubmitting={isSubmitting}
           onNameChange={setFormName}
           onAmountChange={setFormAmount}
           onDueDayChange={setFormDay}
-          onTypeChange={setFormType}
-          onCategoryChange={setFormCategory}
-          onClose={() => setShowForm(false)}
+          onTypeChange={(type) => {
+            setFormType(type);
+            setFormCategoryId(null);
+
+            if (type === "Recebimento" && formPaymentMethod === PaymentMethod.CreditCard) {
+              setFormPaymentMethod(PaymentMethod.Pix);
+              setFormCardId(null);
+            }
+          }}
+          onCategoryChange={setFormCategoryId}
+          onPaymentMethodChange={(method) => {
+            setFormPaymentMethod(method);
+
+            if (method === PaymentMethod.CreditCard) {
+              setFormAccountId(null);
+            } else {
+              setFormCardId(null);
+            }
+          }}
+          onAccountChange={setFormAccountId}
+          onCardChange={setFormCardId}
+          onClose={() => {
+            setShowForm(false);
+            resetForm();
+          }}
           onSubmit={handleCreate}
         />
       </div>
