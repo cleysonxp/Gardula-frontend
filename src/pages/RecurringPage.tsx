@@ -7,6 +7,7 @@ import { RecurringList } from "../features/recurring/components/RecurringList";
 import { RecurringNotice } from "../features/recurring/components/RecurringNotice";
 import { RecurringSummary } from "../features/recurring/components/RecurringSummary";
 import { UpcomingRecurring } from "../features/recurring/components/UpcomingRecurring";
+import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 
 import { getCategories } from "../features/categories/services/categoryService";
 import type { CategoryResponse } from "../features/categories/services/categoryService";
@@ -19,6 +20,7 @@ import type { CardResponse } from "../features/cards/types/card.types";
 
 import {
   createRecurringTransaction,
+  deleteRecurringTransaction,
   getRecurringTransactions,
   setRecurringTransactionStatus,
   updateRecurringTransaction,
@@ -124,6 +126,9 @@ export function RecurringPage() {
   const [formPaymentMethod, setFormPaymentMethod] = useState<number>(PaymentMethod.Pix);
   const [formAccountId, setFormAccountId] = useState<number | null>(null);
   const [formCardId, setFormCardId] = useState<number | null>(null);
+
+  const [deletingItem, setDeletingItem] = useState<RecurringItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -500,6 +505,35 @@ export function RecurringPage() {
     }
   };
 
+
+  const handleDelete = async () => {
+    if (!deletingItem || isDeleting) return;
+
+    const id = deletingItem.id;
+
+    try {
+      setIsDeleting(true);
+
+      await deleteRecurringTransaction(id);
+
+      setRecurringTransactions((previous) =>
+        previous.filter((transaction) => transaction.id !== id)
+      );
+
+      setItems((previous) =>
+        previous.filter((item) => item.id !== id)
+      );
+
+      setDeletingItem(null);
+      setNotice("Recorrência excluída com sucesso.");
+    } catch (error) {
+      console.error("Failed to delete recurring transaction:", error);
+      setNotice("Não foi possível excluir a recorrência. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleClearFilters = () => {
     setSearch("");
     setTypeFilter("Todas");
@@ -601,6 +635,13 @@ export function RecurringPage() {
           onClearFilters={handleClearFilters}
           onToggleStatus={toggleStatus}
           onEdit={handleEdit}
+          onDelete={(id) => {
+            const item = items.find((item) => item.id === id);
+
+            if (item) {
+              setDeletingItem(item);
+            }
+          }}
           formatCurrency={formatCurrency}
         />
 
@@ -660,6 +701,18 @@ export function RecurringPage() {
           onSubmit={handleCreate}
         />
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={deletingItem !== null}
+        itemName={deletingItem?.name ?? ""}
+        isDeleting={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          if (!isDeleting) {
+            setDeletingItem(null);
+          }
+        }}
+      />
     </div>
   );
 }

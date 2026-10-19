@@ -6,6 +6,7 @@ import {
     Ellipsis,
     Filter,
     Search,
+    Trash2,
 } from "lucide-react";
 
 import type {
@@ -28,6 +29,7 @@ type RecurringListProps = {
     onClearFilters: () => void;
     onToggleStatus: (id: number) => void;
     onEdit: (item: RecurringItem) => void;
+    onDelete: (id: number) => void;
     formatCurrency: (value: number) => string;
 };
 
@@ -45,6 +47,7 @@ export function RecurringList({
     onClearFilters,
     onToggleStatus,
     onEdit,
+    onDelete,
     formatCurrency,
 }: RecurringListProps) {
     return (
@@ -64,8 +67,8 @@ export function RecurringList({
                         type="button"
                         onClick={onToggleFilters}
                         className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${showFilters
-                                ? "border-violet-200 bg-violet-50 text-violet-700"
-                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                            ? "border-violet-200 bg-violet-50 text-violet-700"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
                             }`}
                     >
                         <Filter size={16} />
@@ -236,6 +239,16 @@ export function RecurringList({
                                             className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                                         >
                                             <Ellipsis size={18} />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => onDelete(item.id)}
+                                            title="Excluir recorrência"
+                                            aria-label={`Excluir ${item.name}`}
+                                            className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                                        >
+                                            <Trash2 size={17} />
                                         </button>
                                     </div>
                                 </td>
