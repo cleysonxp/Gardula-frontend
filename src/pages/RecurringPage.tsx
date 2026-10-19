@@ -20,6 +20,7 @@ import type { CardResponse } from "../features/cards/types/card.types";
 import {
   createRecurringTransaction,
   getRecurringTransactions,
+  setRecurringTransactionStatus,
   updateRecurringTransaction,
 } from "../features/recurring/services/recurringService";
 
@@ -453,9 +454,50 @@ export function RecurringPage() {
     }
   };
 
+  const toggleStatus = async (id: number) => {
+    const item = items.find((item) => item.id === id);
 
-  const toggleStatus = (id: number) => {
-    setNotice("A alteração de status será integrada na próxima etapa.");
+    if (!item) {
+      setNotice("Não foi possível localizar a recorrência.");
+      return;
+    }
+
+    const isActive = item.status !== "Ativa";
+
+    try {
+      await setRecurringTransactionStatus(id, isActive);
+
+      setRecurringTransactions((previous) =>
+        previous.map((transaction) =>
+          transaction.id === id
+            ? { ...transaction, isActive }
+            : transaction,
+        ),
+      );
+
+      setItems((previous) =>
+        previous.map((item) =>
+          item.id === id
+            ? {
+              ...item,
+              status: isActive ? "Ativa" : "Pausada",
+            }
+            : item,
+        ),
+      );
+
+      setNotice(
+        isActive
+          ? "Recorrência ativada com sucesso."
+          : "Recorrência pausada com sucesso.",
+      );
+    } catch (error) {
+      console.error("Failed to update recurring transaction status:", error);
+
+      setNotice(
+        "Não foi possível alterar o status da recorrência. Tente novamente.",
+      );
+    }
   };
 
   const handleClearFilters = () => {
