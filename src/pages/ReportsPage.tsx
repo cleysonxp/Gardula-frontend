@@ -127,7 +127,7 @@ export function ReportsPage() {
                     onCategoryFilterChange={setCategoryFilter}
                     totalExpenses={totalExpenses}
                 />
-{/* 
+
                 <ReportTransactions
                     transactions={visibleTransactions}
                     search={search}
@@ -139,7 +139,7 @@ export function ReportsPage() {
                     page={page}
                     onPageChange={handlePageChange}
                     pageSize={pageSize}
-                /> */}
+                />
 
                 <ReportExport transactions={filteredTransactions} />
             </div>
