@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute"
 import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout"
 import { RecurringPage } from "@/pages/RecurringPage";
 import { PlanningPage } from "@/pages/PlanningPage";
+import { ReportsPage } from "@/pages/ReportsPage";
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
           {
             path: "/planning",
             element: <PlanningPage />,
+          },
+          {
+            path: "/reports",
+            element: <ReportsPage />,
           },
         ],
       },
