@@ -21,3 +21,26 @@ export type MonthlyReport = {
     income: number;
     expenses: number;
 };
+
+export type ReportResponse = {
+    totalIncome: number;
+    totalExpense: number;
+    balance: number;
+    totalTransactions: number;
+    monthlyEvolution: MonthlyEvolutionResponse[];
+    categorySpending: ReportCategorySpendingResponse[];
+};
+
+export type MonthlyEvolutionResponse = {
+    year: number;
+    month: number;
+    totalIncome: number;
+    totalExpense: number;
+};
+
+export type ReportCategorySpendingResponse = {
+    categoryId: number;
+    categoryName: string;
+    amount: number;
+    percentage: number;
+};

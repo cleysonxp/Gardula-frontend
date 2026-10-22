@@ -1,34 +1,51 @@
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import type { Transaction } from "../types/report.types";
+
+import type { Period, ReportResponse } from "../types/report.types";
 import { currency } from "../utils/report.utils";
 
 type ReportExportProps = {
-    transactions: Transaction[];
+    report: ReportResponse | null;
+    period: Period;
 };
 
-export function ReportExport({ transactions }: ReportExportProps) {
+export function ReportExport({ report, period }: ReportExportProps) {
     function handleExportCSV() {
-        const headers = [
-            "Data",
-            "Descrição",
-            "Categoria",
-            "Tipo",
-            "Conta",
-            "Valor",
+        if (!report) return;
+
+        const rows = [
+            ["Relatório financeiro Gardula"],
+            ["Período", period],
+            [],
+            ["Resumo"],
+            ["Indicador", "Valor"],
+            ["Entradas", report.totalIncome.toFixed(2).replace(".", ",")],
+            ["Saídas", report.totalExpense.toFixed(2).replace(".", ",")],
+            ["Resultado", report.balance.toFixed(2).replace(".", ",")],
+            ["Total de transações", String(report.totalTransactions)],
+            [],
+            ["Despesas por categoria"],
+            ["Categoria", "Valor", "Percentual"],
+            ...report.categorySpending.map((category) => [
+                category.categoryName,
+                category.amount.toFixed(2).replace(".", ","),
+                `${category.percentage.toFixed(2).replace(".", ",")}%`,
+            ]),
+            [],
+            ["Evolução mensal"],
+            ["Mês", "Entradas", "Saídas"],
+            ...report.monthlyEvolution.map((month) => [
+                `${String(month.month).padStart(2, "0")}/${month.year}`,
+                month.totalIncome.toFixed(2).replace(".", ","),
+                month.totalExpense.toFixed(2).replace(".", ","),
+            ]),
         ];
 
-        const rows = transactions.map((transaction) => [
-            transaction.date,
-            transaction.description,
-            transaction.category,
-            transaction.type,
-            transaction.account,
-            transaction.amount.toFixed(2).replace(".", ","),
-        ]);
-
-        const csvContent = [headers, ...rows]
+        const csvContent = rows
             .map((row) =>
-                row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";")
+                row.map((value) => {
+                    const text = String(value ?? "");
+                    return `"${text.replace(/"/g, '""')}"`;
+                }).join(";")
             )
             .join("\n");
 
@@ -57,7 +74,7 @@ export function ReportExport({ transactions }: ReportExportProps) {
             <div className="mb-5">
                 <h2 className="text-lg font-semibold">Exportar relatórios</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                    Exporte seus dados para analisar ou guardar uma cópia.
+                    Exporte os indicadores e gráficos do período selecionado.
                 </p>
             </div>
 
@@ -69,14 +86,15 @@ export function ReportExport({ transactions }: ReportExportProps) {
                         </div>
                         <div>
                             <p className="font-medium text-slate-800">Planilha CSV</p>
-                            <p className="mt-1 text-sm text-slate-500">Dados das transações</p>
+                            <p className="mt-1 text-sm text-slate-500">Resumo, categorias e evolução mensal</p>
                         </div>
                     </div>
 
                     <button
                         type="button"
                         onClick={handleExportCSV}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                        disabled={!report}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <Download size={16} />
                         Exportar
@@ -106,7 +124,9 @@ export function ReportExport({ transactions }: ReportExportProps) {
             </div>
 
             <p className="mt-4 text-xs text-slate-500">
-                {transactions.length} transações disponíveis para exportação. Valores formatados em reais: {currency(0)}.
+                {report
+                    ? `${report.totalTransactions} transações no período. Resultado: ${currency(report.balance)}.`
+                    : "Carregue um relatório para habilitar a exportação CSV."}
             </p>
         </section>
     );

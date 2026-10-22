@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 
 import { SummaryCard } from "../features/reports/components/SummaryCard";
@@ -7,77 +7,111 @@ import { ReportPeriodFilter } from "../features/reports/components/ReportPeriodF
 import { MonthlyEvolutionChart } from "../features/reports/components/MonthlyEvolutionChart";
 import { ExpensesByCategory } from "../features/reports/components/ExpensesByCategory";
 import { ReportExport } from "../features/reports/components/ReportExport";
-import { ReportTransactions } from "../features/reports/components/ReportTransactions";
 
-import { initialTransactions } from "../features/reports/data/reports.mock";
-import type { Period } from "../features/reports/types/report.types";
+import { getReport } from "../features/reports/services/reportService";
+
+import type { Period, ReportResponse } from "../features/reports/types/report.types";
+
 import { currency } from "../features/reports/utils/report.utils";
+
+
+function getReportDates(period: Period) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    let startDate: Date;
+    const endDate = new Date(year, month + 1, 0);
+
+    switch (period) {
+        case "3 meses":
+            startDate = new Date(year, month - 2, 1);
+            break;
+
+        case "6 meses":
+            startDate = new Date(year, month - 5, 1);
+            break;
+
+        case "Este ano":
+            startDate = new Date(year, 0, 1);
+            break;
+
+        case "Personalizado":
+            return null;
+    }
+
+    const formatDate = (date: Date) => {
+        const dateYear = date.getFullYear();
+        const dateMonth = String(date.getMonth() + 1).padStart(2, "0");
+        const dateDay = String(date.getDate()).padStart(2, "0");
+
+        return `${dateYear}-${dateMonth}-${dateDay}`;
+    };
+
+    return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+    };
+}
 
 export function ReportsPage() {
     const [period, setPeriod] = useState<Period>("6 meses");
-    const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("Todas");
-    const [transactionCategoryFilter, setTransactionCategoryFilter] = useState("Todas");
-    const [transactionType, setTransactionType] = useState("Todas");
-    const [page, setPage] = useState(1);
 
-    const pageSize = 7;
+    const [report, setReport] = useState<ReportResponse | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const filteredTransactions = useMemo(() => {
-        return initialTransactions.filter((transaction) => {
-            const matchesSearch =
-                transaction.description.toLowerCase().includes(search.toLowerCase()) ||
-                transaction.category.toLowerCase().includes(search.toLowerCase()) ||
-                transaction.account.toLowerCase().includes(search.toLowerCase());
+    useEffect(() => {
+        const dates = getReportDates(period);
 
-            const matchesCategory =
-                transactionCategoryFilter === "Todas" ||
-                transaction.category === transactionCategoryFilter;
+        if (!dates) {
+            setReport(null);
+            setError("O período personalizado ainda não está disponível.");
+            setLoading(false);
+            return;
+        }
 
-            const matchesType =
-                transactionType === "Todas" ||
-                transaction.type === transactionType;
+        let cancelled = false;
 
-            return matchesSearch && matchesCategory && matchesType;
-        });
-    }, [search, transactionCategoryFilter, transactionType]);
+        async function loadReport() {
+            setLoading(true);
+            setError(null);
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(filteredTransactions.length / pageSize)
-    );
+            try {
+                const data = await getReport(
+                    dates.startDate,
+                    dates.endDate,
+                );
 
-    const visibleTransactions = filteredTransactions.slice(
-        (page - 1) * pageSize,
-        page * pageSize
-    );
+                if (!cancelled) {
+                    setReport(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setReport(null);
+                    setError("Não foi possível carregar os relatórios.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        }
 
-    const totalIncome = 5000;
-    const totalExpenses = 2550;
-    const balance = totalIncome - totalExpenses;
+        loadReport();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [period]);
+
+    const totalIncome = report?.totalIncome ?? 0;
+    const totalExpenses = report?.totalExpense ?? 0;
+    const balance = report?.balance ?? 0;
 
     const handlePeriodChange = (selectedPeriod: Period) => {
         setPeriod(selectedPeriod);
-        setPage(1);
-    };
-
-    const handleSearchChange = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
-
-    const handleTransactionCategoryChange = (value: string) => {
-        setTransactionCategoryFilter(value);
-        setPage(1);
-    };
-
-    const handleTransactionTypeChange = (value: string) => {
-        setTransactionType(value);
-        setPage(1);
-    };
-
-    const handlePageChange = (selectedPage: number) => {
-        setPage(Math.min(Math.max(1, selectedPage), totalPages));
     };
 
     const handleExport = () => {
@@ -94,54 +128,51 @@ export function ReportsPage() {
                     onPeriodChange={handlePeriodChange}
                 />
 
+                {error && (
+                    <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                        {error}
+                    </p>
+                )}
+
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <SummaryCard
                         title="Resultado do período"
-                        value={currency(balance)}
-                        description="+12,5% em relação ao período anterior"
+                        value={loading ? "Carregando..." : currency(balance)}
+                        description="Saldo entre entradas e saídas no período"
                         icon={TrendingUp}
                         variant="green"
                     />
 
                     <SummaryCard
                         title="Entradas"
-                        value={currency(totalIncome)}
-                        description="+8,3% em relação ao período anterior"
+                        value={loading ? "Carregando..." : currency(totalIncome)}
+                        description="Total de entradas no período"
                         icon={ArrowUp}
                         variant="blue"
                     />
 
                     <SummaryCard
                         title="Saídas"
-                        value={currency(totalExpenses)}
-                        description="+4,1% em relação ao período anterior"
+                        value={loading ? "Carregando..." : currency(totalExpenses)}
+                        description="Total de saídas no período"
                         icon={ArrowDown}
                         variant="red"
                     />
                 </section>
 
-                <MonthlyEvolutionChart period={period} />
+                <MonthlyEvolutionChart
+                    period={period}
+                    data={report?.monthlyEvolution ?? []}
+                />
 
                 <ExpensesByCategory
                     categoryFilter={categoryFilter}
                     onCategoryFilterChange={setCategoryFilter}
                     totalExpenses={totalExpenses}
+                    categories={report?.categorySpending ?? []}
                 />
 
-                <ReportTransactions
-                    transactions={visibleTransactions}
-                    search={search}
-                    onSearchChange={handleSearchChange}
-                    transactionType={transactionType}
-                    onTransactionTypeChange={handleTransactionTypeChange}
-                    categoryFilter={transactionCategoryFilter}
-                    onCategoryFilterChange={handleTransactionCategoryChange}
-                    page={page}
-                    onPageChange={handlePageChange}
-                    pageSize={pageSize}
-                />
-
-                <ReportExport transactions={filteredTransactions} />
+                <ReportExport report={report} period={period} />
             </div>
         </main>
     );
